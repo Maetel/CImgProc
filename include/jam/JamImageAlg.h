@@ -15,13 +15,16 @@ namespace CIMGPROC
 	{
 		// TODO list
 		//	* otsu binarization
-		//	* up/down sampling
+		//	* up/down sampling (bilinear, bicubic)
 		//	* demosaic (bayer2rgb)
+		//	* bin packing
+		//	* morphology (erosion & dilation)
 
 		using uint8_t = unsigned char;
 		using uchar = uint8_t;
 
-		enum Convert2Gray { RGB2GRAY = 0, BGR2GRAY, RGBA2GRAY, BGRA2GRAY};
+		enum Convert2Gray { RGB2GRAY = 0, BGR2GRAY, RGBA2GRAY, BGRA2GRAY, };
+		enum Binarize { THRESHOLD = 0, OTSU, };
 
 		template <int ConvertType = RGB2GRAY, int Channel = 3>
 		inline void convert2Gray(uint8_t const* input, uint8_t * output, int length)
@@ -267,11 +270,12 @@ namespace CIMGPROC
 			return numerator / double(length * dev1 * dev2);
 		}
 
+		//https://www.geeksforgeeks.org/gaussian-filter-generation-c/
 		template <typename T = double>
 		inline void gaussianKernelGeneration(T * output, int kernelSize = 3, double sigma = 1.0)
 		{
 			// intialising standard deviation to 1.0 
-			double r, s = 2.0 * sigma * sigma;
+			double s = 2.0 * sigma * sigma;
 
 			// sum is for normalization 
 			double sum = 0.0;
@@ -281,9 +285,8 @@ namespace CIMGPROC
 			// generating kernel 
 			for (int x = -kernOffset; x <= kernOffset; x++) {
 				for (int y = -kernOffset; y <= kernOffset; y++) {
-					r = std::sqrt(x * x + y * y);
 					const int dst = x + kernOffset + (y + kernOffset) * kernelSize;
-					output[dst] = (std::exp(-(r * r) / s)) / (CIMGPROC::PI * s);
+					output[dst] = (std::exp(-1 * (x * x + y * y) / s)) / (CIMGPROC::PI * s);
 					sum += output[dst];
 				}
 			}
@@ -343,7 +346,6 @@ namespace CIMGPROC
 							filler += val;
 						}
 					}
-
 					const T2 val = static_cast<T2>(normalize ? (filler / double(normalizer)) : filler);
 					output[x + y * wid] = val;
 				}
@@ -361,6 +363,116 @@ namespace CIMGPROC
 
 			convolution(input, output, wid, hi, gaussianKernel.data(), kernelSize, kernelSize);
 		}
+
+		template <typename T1, typename T2 = T1>
+		inline void difference(T1 const* input1, T1 const* input2, int length, T2 * output, double* sum_of_distance = nullptr)
+		{
+			distance(input1, input2, length, output, sum_of_distance);
+		}
+		template <typename T1, typename T2 = T1>
+		inline void distance(T1 const* input1, T1 const* input2, int length, T2 * output, double* sum_of_distance = nullptr)
+		{
+			if (nullptr == input1 || nullptr == input2 || 0 >= length || nullptr == output)
+				return;
+			
+			const bool doSum = nullptr != sum_of_distance;
+			double summer = 0.;
+
+			for (int idx = 0; idx < length; ++idx)
+			{
+				const double val = std::abs(double(input1[idx]) - double(input2[idx]));
+				output[idx] = T2(val);
+				if (doSum)
+					summer += val;
+			}
+			
+			if (doSum)
+				* sum_of_distance = summer;
+		}
+
+		// @param threshold : in case of THRESHOLD, input. in case of OTSU, output
+		template <int BinType = OTSU, typename T = uint8_t>
+		inline void binarize(uint8_t const* input, uint8_t* output, int length, T* threshold = nullptr)
+		{
+			if (nullptr == input || nullptr == output || 0 >= length)
+				return;
+
+			T _thres;
+			T& thres = (nullptr == threshold) ? _thres : *threshold;
+
+			// Otsu binarization
+			//https://www.ipol.im/pub/art/2016/158/
+			if constexpr (BinType == OTSU)
+			{
+				int hist[256];
+				histogram(input, length, hist);
+
+				// Compute threshold
+				// Init variables
+				float sum = 0;
+				float sumB = 0;
+				int q1 = 0;
+				int q2 = 0;
+				float varMax = 0;
+
+				// Auxiliary value for computing m2
+				for (int i = 0; i <= 255; i++)
+					sum += i * ((int)hist[i]);
+					
+				for (int i = 0; i <= 255; i++)
+				{
+					// Update q1
+					q1 += hist[i];
+					if (q1 == 0)
+						continue;
+					// Update q2
+					q2 = length - q1;
+
+					if (q2 == 0)
+						break;
+					// Update m1 and m2
+					sumB += (float)(i * ((int)hist[i]));
+					float m1 = sumB / q1;
+					float m2 = (sum - sumB) / q2;
+
+					// Update the between class variance
+					float varBetween = (float)q1 * (float)q2 * (m1 - m2) * (m1 - m2);
+
+					// Update the threshold if necessary
+					if (varBetween > varMax)
+					{
+						varMax = varBetween;
+						thres = static_cast<uint8_t>(i);
+					}
+				}
+			}
+			else if constexpr (BinType == THRESHOLD)
+			{
+				if (nullptr == threshold)
+					return;
+			}
+
+			std::fill(output, output + length, 0);
+			for (int idx = 0; idx < length; ++idx)
+				if (input[idx] > thres)
+					output[idx] = 255;
+		}
+
+		template <typename T1 = uint8_t, typename T2 = T1>
+		inline void differenceOfGaussian(uint8_t const* input, T1* output, int wid, int hi, int gauss_size_l = 3, int gauss_size_r = 7, double gauss_sigma_l = 1.0, double gauss_sigma_r = 2.0)
+		{
+			if (nullptr == input || nullptr == output ||  0 > wid || 0 > hi)
+				return;
+
+			const int length = wid * hi;
+			T2 *gauss_l, *gauss_r;
+			gauss_l = new T2[length];
+			gauss_r = new T2[length];
+			ImageAlg::gaussianConvolution(input, gauss_l, wid, hi, gauss_size_l, gauss_sigma_l);
+			ImageAlg::gaussianConvolution(input, gauss_r, wid, hi, gauss_size_r, gauss_sigma_r);
+			ImageAlg::difference(gauss_l, gauss_r, length, output);
+		}
+
 	} //!ImageAlg
 }
 #endif //!CIMGPROC_IMAGEALG_H

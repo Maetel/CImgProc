@@ -17,4 +17,4 @@ public:
 	void execute();
 };
 
-#endif !CIMGPROC_JAM_EXECUTION_H
+#endif //!CIMGPROC_JAM_EXECUTION_H

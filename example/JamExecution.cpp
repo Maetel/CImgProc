@@ -6,7 +6,7 @@
 #include "JamExecution.h"
 
 #include "CImgProc.h"
-#include "Jam/JamUtility.h"
+#include "JamUtility.h"
 
 //std
 #include <functional>
@@ -133,15 +133,70 @@ void Jam::execute()
 		std::cout << "ZNCC value : " << ZNCCVal << std::endl;
 	}
 
-	//gaussian convolution
+	//binarization
+	cv::Mat lena_otsu(hi, wid, CV_8U);
 	if (1)
 	{
-		cv::Mat lena_gauss(hi, wid, CV_8U);
+		{
+			SCOPED_TIMER(Otsu binarization);
+			ImageAlg::binarize(lenaGray.data, lena_otsu.data, pxCount);
+			//int binThres = 50;
+			//ImageAlg::binarize<ImageAlg::THRESHOLD>(lenaGray.data, lena_otsu.data, pxCount, &binThres);
+
+		}
+		cv::imwrite("lena_Otsu.jpg", lena_otsu);
+	}
+
+	//gaussian convolution
+	cv::Mat lena_gauss(hi, wid, CV_8U);
+	cv::Mat lena_diff(hi, wid, CV_8U);
+	if (1)
+	{
 		{
 			SCOPED_TIMER(gaussian convolution);
-			ImageAlg::gaussianConvolution(lenaGray.data, lena_gauss.data, wid, hi, 7, 1);
+			ImageAlg::gaussianConvolution(lenaGray.data, lena_gauss.data, wid, hi, 5, 2.0);
 		}
 		cv::imwrite("lena_gauss.jpg", lena_gauss);
+
+		double diff_sum = 0.;
+		{
+			SCOPED_TIMER(image difference);
+			ImageAlg::distance(lenaGray.data, lena_gauss.data, pxCount, lena_diff.data, &diff_sum);
+		}
+		std::cout << "Sum of difference : " << diff_sum << std::endl;
+		cv::imwrite("lena_diff.jpg", lena_diff);
+	}
+
+	//difference of gaussian
+	cv::Mat DoG_bin(hi, wid, CV_8U);
+	if(1)
+	{
+		cv::Mat DoG(hi, wid, CV_8U);
+		{
+			SCOPED_TIMER(difference of gaussian);
+			ImageAlg::differenceOfGaussian(lenaGray.data, DoG.data, wid, hi);
+		}
+		int binThres;
+		ImageAlg::binarize(DoG.data, DoG_bin.data, pxCount, &binThres);
+		cv::imwrite("lena_DoG_binarized.jpg", DoG_bin);
+		std::cout << "Otsu binarization threshold : " << binThres << std::endl;
+	}
+
+	//convolution
+	cv::Mat lena_sobel(hi, wid, CV_16S);
+	if (1)
+	{
+		std::vector<int> sobel =
+		{
+			-1, 0, 1,
+			-3, 0, 3,
+			-1, 0, 1
+		};
+		{
+			SCOPED_TIMER(convolution(sobel));
+			ImageAlg::convolution(lena_gauss.data, (short*)lena_sobel.data, wid, hi, sobel.data(), 3, 3);
+		}
+		cv::imwrite("lena_sobel.jpg", lena_sobel);
 	}
 
 	std::cout << "Program finished" << std::endl;
