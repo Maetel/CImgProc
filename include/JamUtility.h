@@ -11,12 +11,12 @@
 #include <chrono>
 
 namespace CIMGPROC {
-	class ScopedTimer
+	class __ScopedTimer
 	{
 		using Timer = std::chrono::high_resolution_clock;
 	public:
-		ScopedTimer(std::string text) : m_text(text) { m_timer = Timer::now(); }
-		~ScopedTimer()
+		__ScopedTimer(std::string text) : m_text(text) { m_timer = Timer::now(); }
+		~__ScopedTimer()
 		{
 			auto finished = Timer::now();
 			const auto elapsed_usec = std::chrono::duration_cast<std::chrono::microseconds>(finished - m_timer).count();
@@ -28,7 +28,7 @@ namespace CIMGPROC {
 		std::string m_text;
 		std::chrono::steady_clock::time_point m_timer;
 	};
-#define SCOPED_TIMER(x) ScopedTimer __scopedTimer(std::string("[Timer @" __FUNCTION__ " @") + std::to_string(__LINE__) + std::string("] " #x));
+#define SCOPED_TIMER(x) __ScopedTimer __scopedTimer##__LINE__(std::string("[Timer @" __FUNCTION__ " @") + std::to_string(__LINE__) + std::string("] " #x));
 }
 
 #endif //!CIMGPROC_UTILITY_H

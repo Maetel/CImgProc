@@ -13,10 +13,12 @@ cmake_minimum_required(VERSION 3.8)
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(BIN_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 set(CIMGPROC_INCLUDE_PATH "${SRC_DIR}/include")
-set(EXAMPLE_DIR "example")
+set(EXAMPLE_DIR "${SRC_DIR}/example")
+set(RESOURCES_DIR "${SRC_DIR}/resources")
+add_definitions(-DRESOURCES_DIR="${RESOURCES_DIR}")
 
 if(NOT DEFINED CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 11)
+    set(CMAKE_CXX_STANDARD 17)
     set(CMAKE_CXX_STANDARD_REQUIRED True)
 endif()
 
@@ -40,15 +42,18 @@ set(OpenCL_STATIC_x64 "${3RD_PARTY}/OpenCL/OpenCL${OpenCL_VERSION}/lib/x64/OpenC
 
 #OpenCV
 set(OPENCV_DIR "C:/work/srcs/opencv")
-set(OPENCV_VERSION "4.1.2")
+set(OPENCV_VERSION "4.1.1")
+string(REPLACE "." "" OPENCV_VERSION_CLEARED ${OPENCV_VERSION})
 set(OPENCV_BUILD "${OPENCV_DIR}/opencv-${OPENCV_VERSION}/build")
 if(NOT EXISTS ${OPENCV_BUILD})
     message(FATAL_ERROR "Please set OpenCV path and version")
 endif()
-set(OPENCV_INCLUDE "${OPENCV_BUILD}/include")
-set(OPENCV_LIB_DIR "${OPENCV_BUILD}/x64/vc15/lib")
-set(OPENCV_LIB_OPTIMIZED "${OPENCV_LIB_DIR}/opencv_world412.lib")
-set(OPENCV_LIB_DEBUG "${OPENCV_LIB_DIR}/opencv_world412d.lib")
+set(OPENCV_INCLUDE "${OPENCV_BUILD}/install/include")
+set(OPENCV_LIB_DIR "${OPENCV_BUILD}/lib")
+set(OPENCV_LIB_OPTIMIZED "${OPENCV_LIB_DIR}/Release/opencv_world${OPENCV_VERSION_CLEARED}.lib")
+set(OPENCV_LIB_DEBUG "${OPENCV_LIB_DIR}/Debug/opencv_world${OPENCV_VERSION_CLEARED}d.lib")
+message("OPENCV_LIB_OPTIMIZED ${OPENCV_LIB_OPTIMIZED}")
+message("OPENCV_LIB_DEBUG : ${OPENCV_LIB_DEBUG}")
 
 ######################################################
 ## macros
@@ -95,14 +100,10 @@ endmacro()
 
 macro(link_opencv)
     include_directories(${current_project} ${OPENCV_INCLUDE})
-    #target_link_libraries(${current_project} STATIC
-    #    OPTIMIZED ${OPENCV_LIB_OPTIMIZED}
-    #    DEBUG ${OPENCV_LIB_DEBUG}
-    #)
     target_link_libraries(${current_project}
-        PUBLIC ${OPENCV_LIB_OPTIMIZED}
-        PUBLIC ${OPENCV_LIB_DEBUG}
-        )
+        debug ${OPENCV_LIB_DEBUG}
+        optimized ${OPENCV_LIB_OPTIMIZED}
+    )
     message("${current_project} : OpenCV world Linked")
 endmacro()
 

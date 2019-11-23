@@ -11,8 +11,11 @@ namespace CIMGPROC
 	//16 digits
 	constexpr double PI = 3.1415926535897932;
 
-	//computes mean and variance(standard deviation) on the run
-	//https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
+	// * Computes mean and variance(standard deviation) on the run
+	// * If there is any NaN input, output will be always NaN
+	// * https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
+
+	template <bool SkipNaN = true>
 	struct RunningAggregate
 	{
 		using uint64_t = unsigned long long;
@@ -25,6 +28,10 @@ namespace CIMGPROC
 
 		void push(double val)
 		{
+			if constexpr (SkipNaN)
+				if (!isfinite(val))
+					return;
+
 			count++;
 			double delta1 = val - mean;
 			mean += delta1 / double(count);
