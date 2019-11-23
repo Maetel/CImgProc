@@ -1,6 +1,6 @@
 ## CImgProc
-> C++ Image processing algorithms
-> Header-only template functions
+* C++ Image processing algorithms
+* Header-only template functions
 
 <img src="/resources/lena example.jpg" width="400px" height="200px" title="px(픽셀) 크기 설정" alt="RubberDuck"></img><br/>
 
