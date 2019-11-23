@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
 		{
 			MatrixXi histogram_BGR(3, 256);
 			{
-				SCOPED_TIMER(histogram gray);
+				SCOPED_TIMER(histogram BGR);
 				ImageAlg::histogram<3>(lenaFace.data, facePxCount, histogram_BGR.data());
 			}
 			//std::cout << histogram_BGR << std::endl;
@@ -124,7 +124,7 @@ int main(int argc, char* argv[])
 	}
 
 	//ZNCC
-	if (0)
+	if (1)
 	{
 		double ZNCCVal = HUGE_VAL;
 		{
@@ -134,18 +134,16 @@ int main(int argc, char* argv[])
 		std::cout << "ZNCC value : " << ZNCCVal << std::endl;
 	}
 
-#if 0
 	//gaussian convolution
 	if (1)
 	{
 		cv::Mat lena_gauss(hi, wid, CV_8U);
 		{
 			SCOPED_TIMER(gaussian convolution);
-			ImageAlg::gaussianConvolotion(lenaGray.data, lena_gauss.data, wid, hi);
+			ImageAlg::gaussianConvolution(lenaGray.data, lena_gauss.data, wid, hi, 7, 1);
 		}
 		cv::imwrite("lena_gauss.jpg", lena_gauss);
 	}
-#endif
 
 	std::cout << "Program finished" << std::endl;
 	return 0;

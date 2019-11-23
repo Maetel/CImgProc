@@ -52,8 +52,6 @@ set(OPENCV_INCLUDE "${OPENCV_BUILD}/install/include")
 set(OPENCV_LIB_DIR "${OPENCV_BUILD}/lib")
 set(OPENCV_LIB_OPTIMIZED "${OPENCV_LIB_DIR}/Release/opencv_world${OPENCV_VERSION_CLEARED}.lib")
 set(OPENCV_LIB_DEBUG "${OPENCV_LIB_DIR}/Debug/opencv_world${OPENCV_VERSION_CLEARED}d.lib")
-message("OPENCV_LIB_OPTIMIZED ${OPENCV_LIB_OPTIMIZED}")
-message("OPENCV_LIB_DEBUG : ${OPENCV_LIB_DEBUG}")
 
 ######################################################
 ## macros

@@ -326,7 +326,7 @@ namespace CIMGPROC
 							const int cur_y = y + kern_y, cur_x = x + kern_x;
 
 							//boundary exception
-							if (cur_y < 0 || cur_y > hi || cur_x < 0 || cur_x > wid)
+							if (cur_y < 0 || cur_y >= hi || cur_x < 0 || cur_x >= wid)
 								continue;
 
 							const auto curVal = input[cur_x + cur_y * wid];
@@ -350,9 +350,8 @@ namespace CIMGPROC
 			}
 		}
 
-#if 0
 		template <typename T1, typename T2 = T1>
-		inline void gaussianConvolotion(T1 const* input, T2* output, int wid, int hi, int kernelSize = 3, double sigma = 1.0)
+		inline void gaussianConvolution(T1 const* input, T2* output, int wid, int hi, int kernelSize = 3, double sigma = 1.0)
 		{
 			if (nullptr == input || nullptr == output || 0 >= wid || 0 >= hi || 3 > kernelSize || 0. > sigma)
 				return;
@@ -362,7 +361,6 @@ namespace CIMGPROC
 
 			convolution(input, output, wid, hi, gaussianKernel.data(), kernelSize, kernelSize);
 		}
-#endif
 	} //!ImageAlg
 }
 #endif //!CIMGPROC_IMAGEALG_H
