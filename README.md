@@ -26,35 +26,36 @@ Library | Included in `3rdparty`    | Ver. dependency   | Usage                 
 OpenCV  | No                        | 4.1.1 / No        | Image IO              |
 Eigen   | Yes                       | 3.3.7 / No        | Matrix computation    |
 OpenCL  | Yes                       | 1.2(NVidia) / Yes | Parallel computation  |
+
 *<em>OpenCV version, path, and DLLs must be set manually on `CMakeLists.txt`</em>
 
 ###### __Functions__
 
 * <em>Math</em>
-    1. Array difference(distance)
-    1. Welford's online algorithm
-    mean/variance/deviation
+1. Array difference(distance)
+1. Welford's online algorithm
+mean/variance/deviation
 
 * <em>Image</em>
-    1. Convert color image to gray
-    RGB/RGBA to gray
-    BGR/BGRA to gray
-    3. Binarization
-    Image histogram
-    Binarization - Threshold/Otsu
-    4. Template matching
-    Normalized Cross Correlation (NCC)
-    Zero Normalized Cross Correlation (ZNCC)
-    6. Image convolution
-    Convolution with manual kernels
-    Gaussian blur (Gaussian kernel generation)
-    Derivative (naive, Sobel, Scharr)
-    Difference of Gaussian (DoG)
+1. Convert color image to gray
+RGB/RGBA to gray
+BGR/BGRA to gray
+3. Binarization
+Image histogram
+Binarization - Threshold/Otsu
+4. Template matching
+Normalized Cross Correlation (NCC)
+Zero Normalized Cross Correlation (ZNCC)
+6. Image convolution
+Convolution with manual kernels
+Gaussian blur (Gaussian kernel generation)
+Derivative (naive, Sobel, Scharr)
+Difference of Gaussian (DoG)
 
 ---
 
 #### __TODO__
-    1. up/down sampling (bilinear, bicubic)
-    1. demosaic (bayer2rgb)
-    1. bin packing
-    1. morphology (erosion & dilation)
+1. up/down sampling (bilinear, bicubic)
+1. demosaic (bayer2rgb)
+1. bin packing
+1. morphology (erosion & dilation)
