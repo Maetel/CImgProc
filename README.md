@@ -21,11 +21,11 @@ Contributor : Brett Ahn
 
 ###### __Example dependencies__
 
-Library |  Included in `3rdparty` | Ver. dependency | Usage
-------------|-----------|-----------|-----------|-----------
-OpenCV | No | 4.1.1 / No | Image IO
-Eigen | Yes | 3.3.7 / No | Matrix computation
-OpenCL | Yes | 1.2(NVidia) / Yes | Parallel computation
+Library | Included in `3rdparty`    | Ver. dependency   | Usage                 |
+--------|---------------------------|-------------------|-----------------------|
+OpenCV  | No                        | 4.1.1 / No        | Image IO              |
+Eigen   | Yes                       | 3.3.7 / No        | Matrix computation    |
+OpenCL  | Yes                       | 1.2(NVidia) / Yes | Parallel computation  |
 *<em>OpenCV version, path, and DLLs must be set manually on `CMakeLists.txt`</em>
 
 ###### __Functions__
@@ -54,7 +54,7 @@ OpenCL | Yes | 1.2(NVidia) / Yes | Parallel computation
 ---
 
 #### __TODO__
-1. up/down sampling (bilinear, bicubic)
-1. demosaic (bayer2rgb)
-1. bin packing
-1. morphology (erosion & dilation)
+    1. up/down sampling (bilinear, bicubic)
+    1. demosaic (bayer2rgb)
+    1. bin packing
+    1. morphology (erosion & dilation)
