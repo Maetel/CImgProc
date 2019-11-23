@@ -6,6 +6,7 @@
 #ifndef CIMGPROC_EIGEN_H
 #define CIMGPROC_EIGEN_H
 
+#if 0
 #include <Eigen/Dense>
 
 using namespace Eigen;
@@ -13,5 +14,6 @@ using namespace Eigen;
 using VectorRGB = Matrix<unsigned char, 3, 1>;
 using MatrixXf  =  Matrix<float, Eigen::Dynamic, Eigen::Dynamic>;
 using MatrixXuc =  Matrix<uchar, Eigen::Dynamic, Eigen::Dynamic>;
+#endif
 
 #endif //!CIMGPROC_EIGEN_H

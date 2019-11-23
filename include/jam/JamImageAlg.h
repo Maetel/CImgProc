@@ -14,7 +14,6 @@ namespace CIMGPROC
 	namespace ImageAlg
 	{
 		// TODO list
-		//	* otsu binarization
 		//	* up/down sampling (bilinear, bicubic)
 		//	* demosaic (bayer2rgb)
 		//	* bin packing
@@ -72,6 +71,7 @@ namespace CIMGPROC
 			}
 		}
 
+
 		// NCC
 		//	* Compare partially
 		//	* will alocate output pointer if not null
@@ -80,7 +80,7 @@ namespace CIMGPROC
 		inline void NCC(
 			T1 const* input1, int input1_wid, int input1_hi,
 			T1 const* input2, int input2_wid, int input2_hi,
-			T2* &output,
+			T2* &output, int increment = 3,
 			std::pair<int,int>* point_of_the_highest_match = nullptr, double* value_of_the_highest_match = nullptr,
 			int* output_wid = nullptr, int* output_hi = nullptr
 		)
@@ -110,16 +110,16 @@ namespace CIMGPROC
 			int highest_val_x = -1;
 			int highest_val_y = -1;
 
-			for (int y = 0; y < out_hi; ++y)
+			for (int y = 0; y < out_hi; y += increment)
 			{
-				for (int x = 0; x < out_wid; ++x)
+				for (int x = 0; x < out_wid; x += increment)
 				{
 					const int startPoint = x + y * input1_wid;
 
 					double numerator = 0., denominator_l = 0., denominator_r = 0.;
-					for (int kern_y = 0; kern_y < input2_hi; ++kern_y)
+					for (int kern_y = 0; kern_y < input2_hi; kern_y += increment)
 					{
-						for (int kern_x = 0; kern_x < input2_wid; ++kern_x)
+						for (int kern_x = 0; kern_x < input2_wid; kern_x += increment)
 						{
 							const int dst1 = startPoint + kern_x + kern_y * input1_wid;
 							const int dst2 = kern_x + kern_y * input2_wid;
@@ -155,13 +155,13 @@ namespace CIMGPROC
 		}
 		// NCC : Compare fully of the same size
 		template <typename T>
-		inline double NCC(T const* input1, T const* input2, int length)
+		inline double NCC(T const* input1, T const* input2, int length, int increment = 1)
 		{
 			if (nullptr == input1 || nullptr == input2 || 0 >= length)
 				return 0.;
 
 			double* pRetval = 0;
-			NCC(input1, length, 1, input2, length, 1, pRetval);
+			NCC(input1, length, 1, input2, length, 1, pRetval, increment);
 			double retval = *pRetval;
 			delete pRetval;
 			return retval;

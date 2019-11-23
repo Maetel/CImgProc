@@ -5,5 +5,6 @@
 ######################################################
 set_as_project()
 link_CImgProc()
-link_eigen()
 link_opencv()
+#link_eigen()
+#link_opencl()
