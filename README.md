@@ -1,23 +1,23 @@
 ## CImgProc
-C++ Image processing algorithms
-Header-only template functions
+> C++ Image processing algorithms
+> Header-only template functions
 
 <img src="/resources/lena example.jpg" width="400px" height="200px" title="px(픽셀) 크기 설정" alt="RubberDuck"></img><br/>
 
 ---
 
 ### Info
-Author : Wonjun Hwang
-E-mail : iamjam4944@gmail.com
-Contributor : Brett Ahn
+1. Author : Wonjun Hwang
+1. E-mail : iamjam4944@gmail.com
+1. Contributor : Brett Ahn
 
 ---
 
 ### Documentation
 
 ###### __Build options__
-`CImgProc` uses C++ 17 grammar.
-`CImgProc` is available by including `./include` to your project
+1. `CImgProc` uses `C++ 17` grammar.
+1. `CImgProc` is available by including `./include` to your project
 
 ###### __Example dependencies__
 
