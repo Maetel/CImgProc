@@ -148,5 +148,5 @@ int main(int argc, char* argv[])
 #endif
 
 	std::cout << "Program finished" << std::endl;
-	return 0;
+	return 0; 
 }
