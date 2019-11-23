@@ -4,13 +4,17 @@
 //  * E-mail : iamjam4944@gmail.com					//
 //////////////////////////////////////////////////////
 
-#include "JamExecution.h"
-#include "BrettExecution.h"
+#ifndef CIMGPROC_JAM_EXECUTION_H
+#define CIMGPROC_JAM_EXECUTION_H
 
-int main(int argc, char* argv[])
+class Jam
 {
-	Jam jam;
-	jam.execute();
+public:
+	Jam() {}
+	~Jam() {}
+	
+public:
+	void execute();
+};
 
-	return 0;
-}
+#endif !CIMGPROC_JAM_EXECUTION_H

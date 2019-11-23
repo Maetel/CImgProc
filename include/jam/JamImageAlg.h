@@ -6,7 +6,7 @@
 #ifndef CIMGPROC_IMAGEALG_H
 #define CIMGPROC_IMAGEALG_H
 
-#include "JamMath.h"
+#include "Jam/JamMath.h"
 #include <utility>
 
 namespace CIMGPROC
