@@ -1,55 +1,56 @@
 ## CImgProc
-C++ Image processing algorithms
-Header-only template functions
+* C++ Image processing algorithms
+* Header-only template functions
 
 <img src="/resources/lena example.jpg" width="400px" height="200px" title="px(픽셀) 크기 설정" alt="RubberDuck"></img><br/>
 
 ---
 
 ### Info
-Author : Wonjun Hwang
-E-mail : iamjam4944@gmail.com
-Contributor : Brett Ahn
+1. Author : Wonjun Hwang
+1. E-mail : iamjam4944@gmail.com
+1. Contributor : Brett Ahn
 
 ---
 
 ### Documentation
 
 ###### __Build options__
-`CImgProc` uses C++ 17 grammar.
-`CImgProc` is available by including `./include` to your project
+1. `CImgProc` uses `C++ 17` grammar.
+1. `CImgProc` is available by including `./include` to your project
 
 ###### __Example dependencies__
 
-Library |  Included in `3rdparty` | Ver. dependency | Usage
-------------|-----------|-----------|-----------|-----------
-OpenCV | No | 4.1.1 / No | Image IO
-Eigen | Yes | 3.3.7 / No | Matrix computation
-OpenCL | Yes | 1.2(NVidia) / Yes | Parallel computation
+Library | Included in `3rdparty`    | Ver. dependency   | Usage                 |
+--------|---------------------------|-------------------|-----------------------|
+OpenCV  | No                        | 4.1.1 / No        | Image IO              |
+Eigen   | Yes                       | 3.3.7 / No        | Matrix computation    |
+OpenCL  | Yes                       | 1.2(NVidia) / Yes | Parallel computation  |
+
 *<em>OpenCV version, path, and DLLs must be set manually on `CMakeLists.txt`</em>
 
 ###### __Functions__
 
 * <em>Math</em>
-    1. Array difference(distance)
-    1. Welford's online algorithm
-    mean/variance/deviation
+1. Array difference(distance)
+1. Welford's online algorithm
+mean/variance/deviation
 
 * <em>Image</em>
-    1. Convert color image to gray
-    RGB/RGBA to gray
-    BGR/BGRA to gray
-    3. Binarization
-    Image histogram
-    Binarization - Threshold/Otsu
-    4. Template matching
-    Normalized Cross Correlation (NCC)
-    Zero Normalized Cross Correlation (ZNCC)
-    6. Image convolution
-    Convolution with manual kernels
-    Gaussian blur (Gaussian kernel generation)
-    Derivative (naive, Sobel, Scharr)
-    Difference of Gaussian (DoG)
+1. Convert color image to gray
+RGB/RGBA to gray
+BGR/BGRA to gray
+3. Binarization
+Image histogram
+Binarization - Threshold/Otsu
+4. Template matching
+Normalized Cross Correlation (NCC)
+Zero Normalized Cross Correlation (ZNCC)
+6. Image convolution
+Convolution with manual kernels
+Gaussian blur (Gaussian kernel generation)
+Derivative (naive, Sobel, Scharr)
+Difference of Gaussian (DoG)
 
 ---
 
