@@ -193,5 +193,33 @@ void Jam::execute()
 		std::cout << "Otsu binarization threshold : " << binThres << std::endl;
 	}
 
+	//dilation
+	cv::Mat DoG_dilated(hi, wid, CV_8U);
+	if (1)
+	{
+		const int dilation_kern_size = 5; // operate with 5x5 kernel
+		{
+			SCOPED_TIMER(Dilation of DoG);
+			ImageAlg::dilation(DoG_bin.data, DoG_dilated.data, wid, hi, dilation_kern_size);
+		}
+		cv::imwrite("lena_DoG_dilation.jpg", DoG_dilated);
+	}
+
+	//synth image
+	cv::Mat synth;
+	lenaBGR.copyTo(synth);
+	if (1)
+	{
+		{
+			SCOPED_TIMER(Synth image);
+			for (int y = 0; y < hi; ++y)
+				for (int x = 0; x < wid; ++x)
+					if (!DoG_dilated.at<uint8_t>(y, x))
+						synth.at<cv::Vec3b>(y, x) = synth.at<cv::Vec3b>(y, x) *0.3;
+		}
+		cv::imwrite("lena_synthed.jpg", synth);
+	}
+
+
 	std::cout << "Program finished" << std::endl;
 }

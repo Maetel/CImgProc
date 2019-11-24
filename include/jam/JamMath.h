@@ -10,6 +10,7 @@ namespace CIMGPROC
 {
 	//16 digits
 	constexpr double PI = 3.1415926535897932;
+	constexpr float FLT_EPSILON = 0.00001f;
 
 	// * Computes mean and variance(standard deviation) on the run
 	// * If there is any NaN input, output will be always NaN

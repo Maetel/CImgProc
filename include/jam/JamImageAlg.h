@@ -14,10 +14,12 @@ namespace CIMGPROC
 	namespace ImageAlg
 	{
 		// TODO list
+		//	* median filter
 		//	* up/down sampling (bilinear, bicubic)
 		//	* demosaic (bayer2rgb)
 		//	* bin packing
 		//	* morphology (erosion & dilation)
+		//	* image pyramid
 
 		using uint8_t = unsigned char;
 		using uchar = uint8_t;
@@ -397,7 +399,7 @@ namespace CIMGPROC
 			if (nullptr == input || nullptr == output || 0 >= length)
 				return;
 
-			T _thres;
+			T _thres = 0;
 			T& thres = (nullptr == threshold) ? _thres : *threshold;
 
 			// Otsu binarization
@@ -471,6 +473,26 @@ namespace CIMGPROC
 			ImageAlg::gaussianConvolution(input, gauss_l, wid, hi, gauss_size_l, gauss_sigma_l);
 			ImageAlg::gaussianConvolution(input, gauss_r, wid, hi, gauss_size_r, gauss_sigma_r);
 			ImageAlg::difference(gauss_l, gauss_r, length, output);
+		}
+
+		template <typename T1 = uint8_t, typename T2 = T1, bool Binarize = true>
+		inline void dilation(T1 const* input, T2 * output, int wid, int hi, int kern_size = 3)
+		{
+			const int kern_length = kern_size * kern_size;
+			std::vector<uint8_t> dilation_kernel(kern_length);
+			std::fill(dilation_kernel.begin(), dilation_kernel.end(), 1);
+			
+			const int zero = 0;
+			if constexpr (Binarize && std::is_same<T1, uint8_t>::value && std::is_same<T2, uint8_t>::value)
+			{
+				T2* buffer = new T2[wid * hi];
+				convolution(input, buffer, wid, hi, dilation_kernel.data(), kern_size, kern_size);
+				binarize<THRESHOLD>(buffer, output, wid * hi, &zero);
+				delete buffer;
+			}
+			else
+				convolution(input, output, wid, hi, dilation_kernel.data(), kern_size, kern_size);
+				
 		}
 
 	} //!ImageAlg
