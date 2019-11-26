@@ -99,7 +99,7 @@ void Jam::execute()
 		// find face
 		//  * this naive approach takes tons of time...
 		//	* needs to be improved by i)parallel ii)dynamic iii)what else?
-		if (1)
+		if (0)
 		{
 			double* outputs = nullptr;
 			const int increment = 3; //this will skip pixels and speed up
@@ -220,6 +220,63 @@ void Jam::execute()
 		cv::imwrite("lena_synthed.jpg", synth);
 	}
 
+	//image transformation
+	std::shared_ptr<cv::Mat> transformed[8];
+	for (int idx = 0; idx < 4; ++idx)
+		transformed[idx] = std::make_shared<cv::Mat>(hi, wid, CV_8UC3);
+	for (int idx = 4; idx < 8; ++idx)
+		transformed[idx] = std::make_shared<cv::Mat>(wid, hi, CV_8UC3);
+	if (1)
+	{
+#if 0
+		// pass transform type as a parameter
+		for (int idx = 0; idx < 8; ++idx)
+		{
+			{
+				SCOPED_TIMER(transformation);
+				ImageAlg::transformation((cv::Vec3b*)lenaBGR.data, (cv::Vec3b*)transformed[idx]->data, wid, hi, ImageAlg::ImageTransform(idx));
+			}
+			cv::imwrite(std::string("lena_transformed") + std::to_string(idx) + std::string(".jpg"), *transformed[idx]);
+		}
+#else
+		// use template function for transformation
+		using TX = ImageAlg::ImageTransform;
+		{
+			SCOPED_TIMER(transformation);
+			ImageAlg::transformation<TX::None>((cv::Vec3b*)lenaBGR.data, (cv::Vec3b*)transformed[0]->data, wid, hi);
+		}
+		{
+			SCOPED_TIMER(transformation);
+			ImageAlg::transformation<TX::MirrorLeftRight>((cv::Vec3b*)lenaBGR.data, (cv::Vec3b*)transformed[1]->data, wid, hi);
+		}
+		{
+			SCOPED_TIMER(transformation);
+			ImageAlg::transformation<TX::MirrorUpDown>((cv::Vec3b*)lenaBGR.data, (cv::Vec3b*)transformed[2]->data, wid, hi);
+		}
+		{
+			SCOPED_TIMER(transformation);
+			ImageAlg::transformation<TX::Rotate180>((cv::Vec3b*)lenaBGR.data, (cv::Vec3b*)transformed[3]->data, wid, hi);
+		}
+		{
+			SCOPED_TIMER(transformation);
+			ImageAlg::transformation<TX::Rotate90CW>((cv::Vec3b*)lenaBGR.data, (cv::Vec3b*)transformed[4]->data, wid, hi);
+		}
+		{
+			SCOPED_TIMER(transformation);
+			ImageAlg::transformation<TX::Rotate90CCW>((cv::Vec3b*)lenaBGR.data, (cv::Vec3b*)transformed[5]->data, wid, hi);
+		}
+		{
+			SCOPED_TIMER(transformation);
+			ImageAlg::transformation<TX::Rotate90CW_MirrorUpDown>((cv::Vec3b*)lenaBGR.data, (cv::Vec3b*)transformed[6]->data, wid, hi);
+		}
+		{
+			SCOPED_TIMER(transformation);
+			ImageAlg::transformation<TX::Rotate90CCW_MirrorUpDown>((cv::Vec3b*)lenaBGR.data, (cv::Vec3b*)transformed[7]->data, wid, hi);
+		}
+		//for (int idx = 0; idx < 8; ++idx)
+		//	cv::imwrite(std::string("lena_transformed") + std::to_string(idx) + std::string(".jpg"), *transformed[idx]);
+#endif
+	}
 
 	std::cout << "Program finished" << std::endl;
 }

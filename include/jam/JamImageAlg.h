@@ -495,6 +495,134 @@ namespace CIMGPROC
 				
 		}
 
+		enum ImageTransform {
+			None = 0,		// input.size == output.size
+			MirrorLeftRight,// input.size == output.size, (x,y) -> (wid-x, y)
+			MirrorUpDown,	// input.size == output.size, (x,y) -> (x, hi-y)
+			Rotate180,		// input.size == output.size, (x,y) -> (wid-x, hi-y)
+			Rotate90CW,				// input.size.transpose() == output.size, (x,y) -> (hi-y, x)
+			Rotate90CCW,			// input.size.transpose() == output.size, (x,y) -> (y, wid-x)
+			Rotate90CW_MirrorUpDown,// input.size.transpose() == output.size, (x,y) -> (hi-y, wid-x)
+			Rotate90CCW_MirrorUpDown,//input.size.transpose() == output.size, (x,y) -> (y,x)
+		};
+
+		// not affine transformation
+		template <typename T = uint8_t>
+		inline void transformation(T const* input, T *output, int wid, int hi, ImageTransform transform)
+		{
+			if (nullptr == input || nullptr == output || 0 >= wid || 0 >= hi)
+				return;
+
+			constexpr int typeSize = sizeof(T);
+			const int length = wid * hi;
+
+#define PxVal(_arr, _x, _y, _stride) ((_arr)[(_x) + (_y) * (_stride)])
+
+			//case char || uchar, suitable for memcpy
+			switch (transform)
+			{
+			case None: // input.size == output.size
+				memcpy(output, input, typeSize * length);
+				break;
+			case MirrorLeftRight: // input.size == output.size, (x,y) -> (wid-x, y)
+				for (int y = 0; y < hi; ++y)
+					for (int x = 0; x < wid; ++x)
+						PxVal(output, wid - 1 - x, y, wid) = PxVal(input, x, y, wid);
+				break;
+			case MirrorUpDown: // input.size == output.size, (x,y) -> (x, hi-y)
+				for (int y = 0; y < hi; ++y)
+					memcpy(output + (y * wid), input + ((hi - 1 - y) * wid), typeSize * wid);
+				break;
+			case Rotate180: // input.size == output.size, (x,y) -> (wid-x, hi-y)
+				for (int y = 0; y < hi; ++y)
+					for (int x = 0; x < wid; ++x)
+						PxVal(output, wid - 1 - x, hi - 1 - y, wid) = PxVal(input, x, y, wid);
+				break;
+			case Rotate90CW: // input.size.transpose() == output.size, (x,y) -> (hi-y, x)
+				for (int y = 0; y < hi; ++y)
+					for (int x = 0; x < wid; ++x)
+						PxVal(output, hi - 1 - y, x, hi) = PxVal(input, x, y, wid);
+				break;
+			case Rotate90CCW: // input.size.transpose() == output.size, (x,y) -> (y, wid-x)
+				for (int y = 0; y < hi; ++y)
+					for (int x = 0; x < wid; ++x)
+						PxVal(output, y, wid - 1 - x, hi) = PxVal(input, x, y, wid);
+				break;
+			case Rotate90CW_MirrorUpDown: // input.size.transpose() == output.size, (x,y) -> (hi-y, wid-x)
+				for (int y = 0; y < hi; ++y)
+					for (int x = 0; x < wid; ++x)
+						PxVal(output, hi - 1 - y, wid - 1 - x, hi) = PxVal(input, x, y, wid);
+				break;
+			case Rotate90CCW_MirrorUpDown: //input.size.transpose() == output.size, (x,y) -> (y,x)
+				for (int y = 0; y < hi; ++y)
+					for (int x = 0; x < wid; ++x)
+						PxVal(output, y, x, hi) = PxVal(input, x, y, wid);
+				break;
+			}
+#undef PxVal
+		}
+
+		// not affine transformation
+		template <int Transform, typename T = uint8_t>
+		inline void transformation(T const* input, T * output, int wid, int hi)
+		{
+			if (nullptr == input || nullptr == output || 0 >= wid || 0 >= hi)
+				return;
+
+			constexpr int typeSize = sizeof(T);
+			const int length = wid * hi;
+
+#define PxVal(_arr, _x, _y, _stride) ((_arr)[(_x) + (_y) * (_stride)])
+
+			if constexpr (MirrorLeftRight == Transform) // input.size == output.size, (x,y) -> (wid-x, y)
+			{
+				for (int y = 0; y < hi; ++y)
+					for (int x = 0; x < wid; ++x)
+						PxVal(output, wid - 1 - x, y, wid) = PxVal(input, x, y, wid);
+			}
+			else if constexpr (MirrorUpDown == Transform) // input.size == output.size, (x,y) -> (x, hi-y)
+			{
+				for (int y = 0; y < hi; ++y)
+					memcpy(output + (y * wid), input + ((hi - 1 - y) * wid), typeSize * wid);
+			}
+			else if constexpr (Rotate180 == Transform) // input.size == output.size, (x,y) -> (wid-x, hi-y)
+			{
+				for (int y = 0; y < hi; ++y)
+					for (int x = 0; x < wid; ++x)
+						PxVal(output, wid - 1 - x, hi - 1 - y, wid) = PxVal(input, x, y, wid);
+			}
+			else if constexpr (Rotate90CW == Transform) // input.size.transpose() == output.size, (x,y) -> (hi-y, x)
+			{
+				for (int y = 0; y < hi; ++y)
+					for (int x = 0; x < wid; ++x)
+						PxVal(output, hi - 1 - y, x, hi) = PxVal(input, x, y, wid);
+			}
+			else if constexpr (Rotate90CCW == Transform) // input.size.transpose() == output.size, (x,y) -> (y, wid-x)
+			{
+				for (int y = 0; y < hi; ++y)
+					for (int x = 0; x < wid; ++x)
+						PxVal(output, y, wid - 1 - x, hi) = PxVal(input, x, y, wid);
+			}
+			else if constexpr (Rotate90CW_MirrorUpDown == Transform) // input.size.transpose() == output.size, (x,y) -> (hi-y, wid-x)
+			{
+				for (int y = 0; y < hi; ++y)
+					for (int x = 0; x < wid; ++x)
+						PxVal(output, hi - 1 - y, wid - 1 - x, hi) = PxVal(input, x, y, wid);
+			}
+			else if constexpr (Rotate90CCW_MirrorUpDown == Transform) //input.size.transpose() == output.size, (x,y) -> (y,x)
+			{
+				for (int y = 0; y < hi; ++y)
+					for (int x = 0; x < wid; ++x)
+						PxVal(output, y, x, hi) = PxVal(input, x, y, wid);
+			}
+			else /* if constexpr (None == Transform) */ // input.size == output.size
+			{
+				memcpy(output, input, typeSize* length);
+			}
+
+			
+#undef PxVal
+		}
 	} //!ImageAlg
 }
 #endif //!CIMGPROC_IMAGEALG_H
