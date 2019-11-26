@@ -26,6 +26,16 @@ namespace CIMGPROC
 
 		enum Convert2Gray { RGB2GRAY = 0, BGR2GRAY, RGBA2GRAY, BGRA2GRAY, };
 		enum Binarize { THRESHOLD = 0, OTSU, };
+		enum ImageTransform {
+			None = 0,		// input.size == output.size
+			MirrorLeftRight,// input.size == output.size, (x,y) -> (wid-x, y)
+			MirrorUpDown,	// input.size == output.size, (x,y) -> (x, hi-y)
+			Rotate180,		// input.size == output.size, (x,y) -> (wid-x, hi-y)
+			Rotate90CW,				// input.size.transpose() == output.size, (x,y) -> (hi-y, x)
+			Rotate90CCW,			// input.size.transpose() == output.size, (x,y) -> (y, wid-x)
+			Rotate90CW_MirrorUpDown,// input.size.transpose() == output.size, (x,y) -> (hi-y, wid-x)
+			Rotate90CCW_MirrorUpDown,//input.size.transpose() == output.size, (x,y) -> (y,x)
+		};
 
 		template <int ConvertType = RGB2GRAY, int Channel = 3>
 		inline void convert2Gray(uint8_t const* input, uint8_t * output, int length)
@@ -51,7 +61,7 @@ namespace CIMGPROC
 					static_cast<float>(input[(idx * Channel) + _B]) * 0.0722f
 					);
 			}
-		}
+		} //!convert2Gray
 
 		template <int Channel = 1, typename T = int>
 		inline void histogram(uint8_t const* input, int length, T* output)
@@ -71,7 +81,7 @@ namespace CIMGPROC
 					for (int ch = 0; ch < Channel; ++ch)
 						++output[input[idx*Channel + ch] * Channel + ch];
 			}
-		}
+		} //!histogram
 
 
 		// NCC
@@ -154,7 +164,8 @@ namespace CIMGPROC
 			{
 				*value_of_the_highest_match = highest_val;
 			}
-		}
+		} //!NCC
+
 		// NCC : Compare fully of the same size
 		template <typename T>
 		inline double NCC(T const* input1, T const* input2, int length, int increment = 1)
@@ -167,7 +178,7 @@ namespace CIMGPROC
 			double retval = *pRetval;
 			delete pRetval;
 			return retval;
-		}
+		} //!NCC
 
 		// skips nan?
 		template <typename T1 = uint8_t, typename T2 = double, int Channel = 1, bool SkipNaN = true>
@@ -200,7 +211,7 @@ namespace CIMGPROC
 			{
 				outputs[ch] = static_cast<T2>(retvals[ch] / double(length));
 			}
-		}
+		} //!mean
 
 		template <typename T1 = uint8_t, typename T2 = double, typename T3 = T2, int Channel = 1, bool SkipNaN = true>
 		inline void variance(T1 const* input, int length, T2* variances, T3* means = nullptr)
@@ -222,7 +233,7 @@ namespace CIMGPROC
 				if (nullptr != means)
 					means[ch] = static_cast<T3>(mean);
 			}
-		}
+		} //!variance
 
 		template <typename T1 = uint8_t, typename T2 = double, typename T3 = T2, int Channel = 1, bool SkipNaN = true>
 		inline void standardDeviation(T1 const* input, int length, T2* deviations, T3* means = nullptr)
@@ -234,7 +245,7 @@ namespace CIMGPROC
 			variance(input, length, variances, means);
 			for (int ch = 0; ch < Channel; ++ch)
 				deviations[ch] = static_cast<T2>(std::sqrt(variances[ch]));
-		}
+		} //!standardDeviation
 
 		template <typename T>
 		inline double ZNCC(T const* input1, T const* input2, int length)
@@ -270,7 +281,7 @@ namespace CIMGPROC
 			}
 
 			return numerator / double(length * dev1 * dev2);
-		}
+		} //!ZNCC
 
 		//https://www.geeksforgeeks.org/gaussian-filter-generation-c/
 		template <typename T = double>
@@ -297,7 +308,7 @@ namespace CIMGPROC
 			for (int i = 0; i < kernelSize; ++i)
 				for (int j = 0; j < kernelSize; ++j)
 					output[i + (j * kernelSize)] /= sum;
-		}
+		} //!gaussianKernelGeneration
 
 		template <typename T1, typename T2 = T1, typename T_KERN = double, bool SkipNaN = true>
 		inline void convolution(T1 const* input, T2 * output, int wid, int hi, const T_KERN * kernel, int kern_wid, int kern_hi)
@@ -352,7 +363,7 @@ namespace CIMGPROC
 					output[x + y * wid] = val;
 				}
 			}
-		}
+		} //!convolution
 
 		template <typename T1, typename T2 = T1>
 		inline void gaussianConvolution(T1 const* input, T2* output, int wid, int hi, int kernelSize = 3, double sigma = 1.0)
@@ -364,13 +375,13 @@ namespace CIMGPROC
 			gaussianKernelGeneration(gaussianKernel.data(), kernelSize, sigma);
 
 			convolution(input, output, wid, hi, gaussianKernel.data(), kernelSize, kernelSize);
-		}
+		} //!gaussianConvolution
 
 		template <typename T1, typename T2 = T1>
 		inline void difference(T1 const* input1, T1 const* input2, int length, T2 * output, double* sum_of_distance = nullptr)
 		{
 			distance(input1, input2, length, output, sum_of_distance);
-		}
+		} //!difference
 		template <typename T1, typename T2 = T1>
 		inline void distance(T1 const* input1, T1 const* input2, int length, T2 * output, double* sum_of_distance = nullptr)
 		{
@@ -390,7 +401,7 @@ namespace CIMGPROC
 			
 			if (doSum)
 				* sum_of_distance = summer;
-		}
+		} //!distance
 
 		// @param threshold : in case of THRESHOLD, input. in case of OTSU, output
 		template <int BinType = OTSU, typename T = uint8_t>
@@ -458,7 +469,7 @@ namespace CIMGPROC
 			for (int idx = 0; idx < length; ++idx)
 				if (input[idx] > thres)
 					output[idx] = 255;
-		}
+		} //!binarize
 
 		template <typename T1 = uint8_t, typename T2 = T1>
 		inline void differenceOfGaussian(uint8_t const* input, T1* output, int wid, int hi, int gauss_size_l = 3, int gauss_size_r = 7, double gauss_sigma_l = 1.0, double gauss_sigma_r = 2.0)
@@ -473,7 +484,7 @@ namespace CIMGPROC
 			ImageAlg::gaussianConvolution(input, gauss_l, wid, hi, gauss_size_l, gauss_sigma_l);
 			ImageAlg::gaussianConvolution(input, gauss_r, wid, hi, gauss_size_r, gauss_sigma_r);
 			ImageAlg::difference(gauss_l, gauss_r, length, output);
-		}
+		} //!differenceOfGaussian
 
 		template <typename T1 = uint8_t, typename T2 = T1, bool Binarize = true>
 		inline void dilation(T1 const* input, T2 * output, int wid, int hi, int kern_size = 3)
@@ -492,19 +503,7 @@ namespace CIMGPROC
 			}
 			else
 				convolution(input, output, wid, hi, dilation_kernel.data(), kern_size, kern_size);
-				
-		}
-
-		enum ImageTransform {
-			None = 0,		// input.size == output.size
-			MirrorLeftRight,// input.size == output.size, (x,y) -> (wid-x, y)
-			MirrorUpDown,	// input.size == output.size, (x,y) -> (x, hi-y)
-			Rotate180,		// input.size == output.size, (x,y) -> (wid-x, hi-y)
-			Rotate90CW,				// input.size.transpose() == output.size, (x,y) -> (hi-y, x)
-			Rotate90CCW,			// input.size.transpose() == output.size, (x,y) -> (y, wid-x)
-			Rotate90CW_MirrorUpDown,// input.size.transpose() == output.size, (x,y) -> (hi-y, wid-x)
-			Rotate90CCW_MirrorUpDown,//input.size.transpose() == output.size, (x,y) -> (y,x)
-		};
+		} //!dilation
 
 		// not affine transformation
 		template <typename T = uint8_t>
@@ -560,7 +559,7 @@ namespace CIMGPROC
 				break;
 			}
 #undef PxVal
-		}
+		} // !transformation parameter type
 
 		// not affine transformation
 		template <int Transform, typename T = uint8_t>
