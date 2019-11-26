@@ -14,12 +14,12 @@ namespace CIMGPROC
 	namespace ImageAlg
 	{
 		// TODO list
-		//	* median filter
 		//	* up/down sampling (bilinear, bicubic)
 		//	* demosaic (bayer2rgb)
 		//	* bin packing
 		//	* morphology (erosion & dilation)
 		//	* image pyramid
+		//	* median filter to Running median
 
 		using uint8_t = unsigned char;
 		using uchar = uint8_t;
@@ -560,6 +560,29 @@ namespace CIMGPROC
 			}
 #undef PxVal
 		} // !transformation parameter type
+		
+		//returns <dst_x, dst_y, stride>
+		template<int Transform>
+		constexpr std::tuple<int, int, int> _transform_dst(int wid, int hi, int x, int y)
+		{
+			using Result = std::tuple<int, int, int>;
+			if constexpr (None == Transform)
+				return Result(x, y, wid);
+			else if constexpr (MirrorLeftRight == Transform)
+				return Result(wid - 1 - x, y, wid);
+			else if constexpr (MirrorUpDown == Transform)
+				return Result(x, hi - 1 - y, wid);
+			else if constexpr (Rotate180 == Transform)
+				return Result(wid - 1 - x, hi - 1 - y, wid);
+			else if constexpr (Rotate90CW == Transform)
+				return Result(hi - 1 - y, x, hi);
+			else if constexpr (Rotate90CCW == Transform)
+				return Result(y, wid - 1 - x, hi);
+			else if constexpr (Rotate90CW_MirrorUpDown == Transform)
+				return Result(hi - 1 - y, wid - 1 - x, hi);
+			else if constexpr (Rotate90CCW_MirrorUpDown == Transform)
+				return Result(y, x, hi);
+		}
 
 		// not affine transformation
 		template <int Transform, typename T = uint8_t>
@@ -571,57 +594,69 @@ namespace CIMGPROC
 			constexpr int typeSize = sizeof(T);
 			const int length = wid * hi;
 
-#define PxVal(_arr, _x, _y, _stride) ((_arr)[(_x) + (_y) * (_stride)])
-
-			if constexpr (MirrorLeftRight == Transform) // input.size == output.size, (x,y) -> (wid-x, y)
+			if constexpr (None == Transform)
 			{
-				for (int y = 0; y < hi; ++y)
-					for (int x = 0; x < wid; ++x)
-						PxVal(output, wid - 1 - x, y, wid) = PxVal(input, x, y, wid);
+				memcpy(output, input, typeSize * length);
 			}
-			else if constexpr (MirrorUpDown == Transform) // input.size == output.size, (x,y) -> (x, hi-y)
+			else if constexpr (MirrorUpDown == Transform)
 			{
 				for (int y = 0; y < hi; ++y)
 					memcpy(output + (y * wid), input + ((hi - 1 - y) * wid), typeSize * wid);
 			}
-			else if constexpr (Rotate180 == Transform) // input.size == output.size, (x,y) -> (wid-x, hi-y)
+			else
 			{
+#define PxVal(_arr, _x, _y, _stride) ((_arr)[(_x) + (_y) * (_stride)])
 				for (int y = 0; y < hi; ++y)
 					for (int x = 0; x < wid; ++x)
-						PxVal(output, wid - 1 - x, hi - 1 - y, wid) = PxVal(input, x, y, wid);
-			}
-			else if constexpr (Rotate90CW == Transform) // input.size.transpose() == output.size, (x,y) -> (hi-y, x)
-			{
-				for (int y = 0; y < hi; ++y)
-					for (int x = 0; x < wid; ++x)
-						PxVal(output, hi - 1 - y, x, hi) = PxVal(input, x, y, wid);
-			}
-			else if constexpr (Rotate90CCW == Transform) // input.size.transpose() == output.size, (x,y) -> (y, wid-x)
-			{
-				for (int y = 0; y < hi; ++y)
-					for (int x = 0; x < wid; ++x)
-						PxVal(output, y, wid - 1 - x, hi) = PxVal(input, x, y, wid);
-			}
-			else if constexpr (Rotate90CW_MirrorUpDown == Transform) // input.size.transpose() == output.size, (x,y) -> (hi-y, wid-x)
-			{
-				for (int y = 0; y < hi; ++y)
-					for (int x = 0; x < wid; ++x)
-						PxVal(output, hi - 1 - y, wid - 1 - x, hi) = PxVal(input, x, y, wid);
-			}
-			else if constexpr (Rotate90CCW_MirrorUpDown == Transform) //input.size.transpose() == output.size, (x,y) -> (y,x)
-			{
-				for (int y = 0; y < hi; ++y)
-					for (int x = 0; x < wid; ++x)
-						PxVal(output, y, x, hi) = PxVal(input, x, y, wid);
-			}
-			else /* if constexpr (None == Transform) */ // input.size == output.size
-			{
-				memcpy(output, input, typeSize* length);
-			}
-
-			
+						PxVal(output,
+							std::get<0>(_transform_dst<Transform>(wid, hi, x, y)), // dst_x
+							std::get<1>(_transform_dst<Transform>(wid, hi, x, y)), // dst_y
+							std::get<2>(_transform_dst<Transform>(wid, hi, x, y))  // stride
+							) = PxVal(input, x, y, wid);
 #undef PxVal
+			}
+		} // ! transformation template type
+
+		template <typename T1, typename T2, bool SkipNaN = true>
+		void medianFilter(T1 const* input, T2 *output, int wid, int hi, int kernelSize = 3)
+		{
+			if (nullptr == input || nullptr == output || 0 >= wid || 0 >= hi || 3 > kernelSize)
+				return;
+
+			const int kern_offset = kernelSize / 2;
+
+			for (int y = 0; y < hi; ++y)
+			{
+				for (int x = 0; x < wid; ++x)
+				{
+					std::vector<T1> values;
+					int kern_count = 0;
+					for (int kern_y = -kern_offset; kern_y <= kern_offset; ++kern_y)
+					{
+						for (int kern_x = -kern_offset; kern_x <= kern_offset; ++kern_x)
+						{
+							const int cur_x = x + kern_x, cur_y = y + kern_y;
+							
+							//boundary exception
+							if (cur_x < 0 || cur_x >= wid || cur_y < 0 || cur_y >= hi)
+								continue;
+							const T1 curval = input[cur_x + cur_y * wid];
+							
+							if constexpr (SkipNaN && (std::is_same<T1, float>::value || std::is_same<T1, double>::value))
+								if (!isfinite(curval))
+									continue;
+
+							auto it = std::upper_bound(values.begin(), values.end(), curval);
+							values.insert(it, curval);
+							kern_count++;
+						}
+					}
+					const auto midVal = static_cast<T2>(values.at(kern_count/2));
+					output[x + y * wid] = midVal;
+				}
+			}
 		}
+
 	} //!ImageAlg
 }
 #endif //!CIMGPROC_IMAGEALG_H

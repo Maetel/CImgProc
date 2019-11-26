@@ -278,5 +278,17 @@ void Jam::execute()
 #endif
 	}
 
+	//median filter
+	cv::Mat lena_median(hi, wid, CV_8U);
+	if (1)
+	{
+		const int kernel_size = 3;
+		{
+			SCOPED_TIMER(median filter);
+			ImageAlg::medianFilter(lenaGray.data, lena_median.data, wid, hi, kernel_size);
+		}
+		cv::imwrite("lena_median.jpg", lena_median);
+	}
+
 	std::cout << "Program finished" << std::endl;
 }

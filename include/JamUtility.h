@@ -21,7 +21,8 @@ namespace CIMGPROC {
 			auto finished = Timer::now();
 			const auto elapsed_usec = std::chrono::duration_cast<std::chrono::microseconds>(finished - m_timer).count();
 			const bool isOver3ms = elapsed_usec > 3000;
-			std::cout << m_text << "  " << (isOver3ms ? (elapsed_usec / 1000) : elapsed_usec) << (isOver3ms ? "ms" : "us") << std::endl;
+			const bool isOver2s = elapsed_usec > 2000000;
+			std::cout << m_text << "  " << (isOver2s ? (elapsed_usec / 1000000) : (isOver3ms ? (elapsed_usec / 1000) : elapsed_usec)) << (isOver2s ? "s" : (isOver3ms ? "ms" : "us")) << std::endl;
 		}
 
 	private:
