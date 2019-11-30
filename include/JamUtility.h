@@ -7,10 +7,31 @@
 #define CIMGPROC_UTILITY_H
 
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <chrono>
 
-namespace CIMGPROC {
+namespace CIMGPROC::Util
+{
+
+	//https://stackoverflow.com/questions/3418231/replace-part-of-a-string-with-another-string
+	inline bool replace(std::string& str, const std::string& from, const std::string& to) {
+		size_t start_pos = str.find(from);
+		if (start_pos == std::string::npos)
+			return false;
+		str.replace(start_pos, from.length(), to);
+		return true;
+	}
+
+	inline std::string fileToStr(std::string const& filePath)
+	{
+		std::ifstream stream(filePath);
+		return std::string(
+			(std::istreambuf_iterator<char>(stream)),
+			std::istreambuf_iterator<char>()
+		);
+	}
+
 	class __ScopedTimer
 	{
 		using Timer = std::chrono::high_resolution_clock;

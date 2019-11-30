@@ -9,8 +9,9 @@
 
 int main(int argc, char* argv[])
 {
-	Jam jam;
-	jam.execute();
+	CIMGPROC::Jam jam;
+	//jam.execute();
+	jam.runCL();
 
 	return 0;
 }

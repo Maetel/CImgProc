@@ -33,24 +33,26 @@ OpenCL  | Yes                       | 1.2(NVidia) / Yes | Parallel computation  
 
 * <em>Math</em>
 1. Array difference(distance)
-1. Welford's online algorithm
+1. Welford's online algorithm - 
 mean/variance/deviation
 
-* <em>Image</em>
+* <em>Naive image data manipulation</em>
 1. Convert color image to gray
-RGB/RGBA to gray
-BGR/BGRA to gray
-3. Binarization
-Image histogram
-Binarization - Threshold/Otsu
-4. Template matching
-Normalized Cross Correlation (NCC)
-Zero Normalized Cross Correlation (ZNCC)
-6. Image convolution
-Convolution with manual kernels
-Gaussian blur (Gaussian kernel generation)
-Derivative (naive, Sobel, Scharr)
-Difference of Gaussian (DoG)
+3. Binarization - 
+(i) Image histogram 
+(ii) Binarization - Threshold/Otsu
+4. Template matching - 
+(i) Normalized Cross Correlation (NCC) 
+(ii) Zero Normalized Cross Correlation (ZNCC)
+6. Image convolution -
+(i) Convolution with manual kernels 
+(ii) Gaussian blur (Gaussian kernel generation) 
+(iii) Derivative (naive, Sobel, Scharr) 
+(iv) Difference of Gaussian (DoG) 
+
+* <em>OpenCL Implementation</em>
+1. Array difference(distance)
+1. Convert color image to gray
 
 ---
 

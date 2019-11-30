@@ -7,14 +7,15 @@
 #ifndef CIMGPROC_JAM_EXECUTION_H
 #define CIMGPROC_JAM_EXECUTION_H
 
-class Jam
+namespace CIMGPROC
 {
-public:
-	Jam() {}
-	~Jam() {}
-	
-public:
-	void execute();
-};
+	class Jam
+	{
+	public:
+		void execute();
+		void runCL();
+	};
+}
+
 
 #endif //!CIMGPROC_JAM_EXECUTION_H
