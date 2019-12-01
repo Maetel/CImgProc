@@ -1,6 +1,7 @@
 ## CImgProc
 * C++ Image processing algorithms
-* Header-only template functions
+* Header-only template functions (naive way)
+* OpenCL 1.2 implemented image processing algorithms
 
 <img src="/resources/lena example.jpg" width="400px" height="200px" title="px(픽셀) 크기 설정" alt="RubberDuck"></img><br/>
 
@@ -9,7 +10,6 @@
 ### Info
 1. Author : Wonjun Hwang
 1. E-mail : iamjam4944@gmail.com
-1. Contributor : Brett Ahn
 
 ---
 
@@ -18,6 +18,7 @@
 ###### __Build options__
 1. `CImgProc` uses `C++ 17` grammar.
 1. `CImgProc` is available by including `./include` to your project
+1. OpenCL project will be separated in the future
 
 ###### __Example dependencies__
 
@@ -27,7 +28,7 @@ OpenCV  | No                        | 4.1.1 / No        | Image IO              
 Eigen   | Yes                       | 3.3.7 / No        | Matrix computation    |
 OpenCL  | Yes                       | 1.2(NVidia) / Yes | Parallel computation  |
 
-*<em>OpenCV version, path, and DLLs must be set manually on `CMakeLists.txt`</em>
+*<em>OpenCV version, path to lib files, and path to DLLs must be set manually on `./scripts/link_cv.cmake`</em>
 
 ###### __Functions__
 
@@ -61,6 +62,7 @@ mean/variance/deviation
 ---
 
 #### __TODO__
+1. separate OpenCL project from example
 1. up/down sampling (bilinear, bicubic)
 1. demosaic (bayer2rgb)
 1. bin packing
