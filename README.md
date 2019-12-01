@@ -53,6 +53,10 @@ mean/variance/deviation
 * <em>OpenCL Implementation</em>
 1. Array difference(distance)
 1. Convert color image to gray
+1. Convolution - 
+(i) Convolution with manual kernels 
+(ii) Gaussian blur (Gaussian kernel generation) 
+(iii) Derivative (naive, Sobel, Scharr) 
 
 ---
 
