@@ -331,9 +331,8 @@ namespace CIMGPROC
 		{
 			CL::CLDifference diff;
 			diff.build();
-			for (int idx = 0; idx < 10; ++idx)
 			{
-				//Util::SCOPED_TIMER(opencl difference);
+				Util::SCOPED_TIMER(opencl difference);
 				diff.difference(queue, input_l, input_r, output, pxCount);
 			}
 		}
@@ -342,9 +341,8 @@ namespace CIMGPROC
 		{
 			CL::CLConvert2Gray clcvt2gray;
 			clcvt2gray.build();
-			for (int idx = 0; idx < 10; ++idx)
 			{
-				//Util::SCOPED_TIMER(opencl cvt2gray);
+				Util::SCOPED_TIMER(opencl cvt2gray);
 				clcvt2gray.convert2gray(queue, input_BGR, output, pxCount, CIMGPROC::CL::CLConvert2Gray::BGR2GRAY);
 			}
 		}
@@ -362,45 +360,45 @@ namespace CIMGPROC
 
 			//gaussian
 			{
-#define KERN_SIZE 19
-#define GAUSS_SIGMA 1.0
-				std::vector<float> gaussianKernel(KERN_SIZE * KERN_SIZE);
-				ImageAlg::gaussianKernelGeneration(gaussianKernel.data(), KERN_SIZE, GAUSS_SIGMA);
-				
-				CL::KernelBuffer gaussBuffer(context, gaussianKernel.data(), KERN_SIZE, KERN_SIZE, true);
 				{
-					Util::SCOPED_TIMER(cl convolution);
-					convolution.convolution(queue, input_gray, convoOutput, wid, hi, gaussBuffer);
+					Util::SCOPED_TIMER(cl gaussian);
+					convolution.gaussianConvolution(queue, input_gray, convoOutput, wid, hi, 5, 1.0);
 				}
-
 				CL::download(queue, convoOutput, convoImg.data, pxCount);
 				cv::imwrite("lena_cl_gauss.jpg", convoImg);
 			}
 
 			//derivative
 			{
-#if 0
-				std::vector<float> sobel =
 				{
-					-1, 0, 1,
-					-3, 0, 3,
-					-1, 0, 1
-				};
-				CL::KernelBuffer sobelBuffer(context, sobel.data(), 3, 3, false);
-				for (int idx = 0; idx < 10; ++idx)
-				{
-					Util::SCOPED_TIMER(cl sobel);
-					convolution.convolution(queue, input_gray, convoOutput, wid, hi, sobelBuffer);
+					Util::SCOPED_TIMER(cl sobel dx);
+					convolution.sobel_dx(queue, input_gray, convoOutput, wid, hi);
 				}
-#else
-				for (int idx = 0; idx < 10; ++idx)
-				{
-					Util::SCOPED_TIMER(cl sobel);
-					convolution.sharpen_laplacian(queue, input_gray, convoOutput, wid, hi);
-				}
-#endif
 				CL::download(queue, convoOutput, convoImg.data, pxCount);
 				cv::imwrite("lena_cl_sobel.jpg", convoImg);
+			}
+
+			//custom kernel
+			{
+				std::vector<float> glassFrame =
+				{
+					1, 1, 1, 1, 1, 1, 1,
+					1, 0, 0, 0, 0, 0, 1,
+					1, 0, -3, -7, -3, 0, 1,
+					1, 0, -7, 30, -7, 0, 1,
+					1, 0, -3, -7, -3, 0, 1,
+					1, 0, 0, 0, 0, 0, 1,
+					1, 1, 1, 1, 1, 1, 1
+				};
+
+				CL::KernelBuffer glassBuffer(context, glassFrame.data(), 7, 7, true);
+				{
+					Util::SCOPED_TIMER(cl glass effect);
+					convolution.convolution(queue, input_gray, convoOutput, wid, hi, glassBuffer);
+				}
+
+				CL::download(queue, convoOutput, convoImg.data, pxCount);
+				cv::imwrite("lena_cl_glass.jpg", convoImg);
 			}
 		}
 

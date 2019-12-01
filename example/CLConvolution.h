@@ -69,11 +69,16 @@ namespace CIMGPROC::CL
 		bool scharr_dy(cl::CommandQueue& queue, cl::Buffer const& input, cl::Buffer& output, int wid, int hi);
 		bool sharpen(cl::CommandQueue& queue, cl::Buffer const& input, cl::Buffer& output, int wid, int hi);
 		bool sharpen_laplacian(cl::CommandQueue& queue, cl::Buffer const& input, cl::Buffer& output, int wid, int hi);
+		//last created gaussian kernel will be cached internally
+		bool gaussianConvolution(cl::CommandQueue& queue, cl::Buffer const& input, cl::Buffer& output, int wid, int hi, int gaussKernSize, double gaussSigma);
 
 	protected:
 		std::map<std::string, cl::Program> m_programs;
 		class Internal;
 		Internal* pImpl;
 	};
+	using CLGaussian = CLConvolution;
+	using CLSobel = CLConvolution;
+	using CLScharr = CLConvolution;
 }
 #endif //!CIMGPROC_CL_CONVOLUTION_H
