@@ -18,7 +18,7 @@ namespace CIMGPROC::CL
 		~CLConvert2Gray();
 
 	public:
-		void rebuildProgram(std::string const& option) override;
+		void rebuildProgram() override;
 		bool convert2gray(cl::CommandQueue& queue, cl::Buffer const& input, cl::Buffer& output, int length, Convert2Gray cvtType);
 
 	protected:

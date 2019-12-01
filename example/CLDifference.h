@@ -17,7 +17,7 @@ namespace CIMGPROC::CL
 		~CLDifference();
 
 	public:
-		void rebuildProgram(std::string const& option) override;
+		void rebuildProgram() override;
 		bool difference(cl::CommandQueue& queue, cl::Buffer const& input_l, cl::Buffer const& input_r, cl::Buffer& output, int length);
 
 	protected:

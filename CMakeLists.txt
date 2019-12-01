@@ -41,7 +41,6 @@ ENDFOREACH()
 ## macros
 ######################################################
 macro(set_as_project)
-    
     #set project
     get_filename_component(ProjectId ${CMAKE_CURRENT_LIST_DIR} NAME)
     string(REPLACE " " "_" ProjectId ${ProjectId})
@@ -49,10 +48,31 @@ macro(set_as_project)
     project(${current_project} CXX)
 
     #add files
-    FILE(GLOB current_project_srcs "*.cpp" "*.h" "*.hpp")
+    FILE(GLOB current_project_srcs "./*.cpp" "./*.h" "./*.hpp")
     add_executable(${current_project} ${current_project_srcs})
 
     message("Project : ${current_project} added")
+endmacro()
+
+macro(set_as_lib)
+    #set project
+    get_filename_component(ProjectId ${CMAKE_CURRENT_LIST_DIR} NAME)
+    string(REPLACE " " "_" ProjectId ${ProjectId})
+    set(current_project ${ProjectId})
+    
+    FILE(GLOB current_project_srcs "*.cpp" "*.h" "*.hpp")
+    
+    set(LIB_TYPE "")
+
+    if(BUILD_SHARED_LIBS)
+        add_library(${current_project} SHARED ${current_project_srcs})
+        set(LIB_TYPE "Shared")
+    else()
+        add_library(${current_project} STATIC ${current_project_srcs})
+        set(LIB_TYPE "Static")
+    endif()
+    
+    message("${LIB_TYPE} Library : ${current_project} added")
 endmacro()
 
 macro(set_base_project)

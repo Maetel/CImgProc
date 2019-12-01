@@ -9,6 +9,7 @@
 #include "JamUtility.h"
 #include "CLDifference.h"
 #include "CLConvert2Gray.h"
+#include "CLConvolution.h"
 
 //std
 #include <functional>
@@ -321,6 +322,7 @@ namespace CIMGPROC
 		
 		
 		cl::Buffer input_BGR(context, CL_MEM_COPY_HOST_PTR, pxCount * sizeof(uint8_t) * 3, lenaBGR.data);
+		cl::Buffer input_gray(context, CL_MEM_COPY_HOST_PTR, pxCount * sizeof(uint8_t), lenaGray.data);
 		cl::Buffer input_l(context, CL_MEM_COPY_HOST_PTR, pxCount * sizeof(uint8_t), lenaGray.data);
 		cl::Buffer input_r(context, CL_MEM_COPY_HOST_PTR, pxCount * sizeof(uint8_t), lenaGray.data);
 		cl::Buffer output(context, CL_MEM_WRITE_ONLY, pxCount * sizeof(uint8_t));
@@ -331,7 +333,7 @@ namespace CIMGPROC
 			diff.build();
 			for (int idx = 0; idx < 10; ++idx)
 			{
-				Util::SCOPED_TIMER(opencl difference);
+				//Util::SCOPED_TIMER(opencl difference);
 				diff.difference(queue, input_l, input_r, output, pxCount);
 			}
 		}
@@ -342,15 +344,68 @@ namespace CIMGPROC
 			clcvt2gray.build();
 			for (int idx = 0; idx < 10; ++idx)
 			{
-				Util::SCOPED_TIMER(opencl cvt2gray);
+				//Util::SCOPED_TIMER(opencl cvt2gray);
 				clcvt2gray.convert2gray(queue, input_BGR, output, pxCount, CIMGPROC::CL::CLConvert2Gray::BGR2GRAY);
 			}
 		}
 		
+		//cl convolution
+		{
+			cl::Buffer convoOutput(context, CL_MEM_WRITE_ONLY, pxCount * sizeof(uint8_t));
+			cv::Mat convoImg(hi, wid, CV_8U);
+
+			CL::CLConvolution convolution;
+			{
+				Util::SCOPED_TIMER(cl convolution build);
+				convolution.build();
+			}
+
+			//gaussian
+			{
+#define KERN_SIZE 19
+#define GAUSS_SIGMA 1.0
+				std::vector<float> gaussianKernel(KERN_SIZE * KERN_SIZE);
+				ImageAlg::gaussianKernelGeneration(gaussianKernel.data(), KERN_SIZE, GAUSS_SIGMA);
+				
+				CL::KernelBuffer gaussBuffer(context, gaussianKernel.data(), KERN_SIZE, KERN_SIZE, true);
+				{
+					Util::SCOPED_TIMER(cl convolution);
+					convolution.convolution(queue, input_gray, convoOutput, wid, hi, gaussBuffer);
+				}
+
+				CL::download(queue, convoOutput, convoImg.data, pxCount);
+				cv::imwrite("lena_cl_gauss.jpg", convoImg);
+			}
+
+			//derivative
+			{
+#if 0
+				std::vector<float> sobel =
+				{
+					-1, 0, 1,
+					-3, 0, 3,
+					-1, 0, 1
+				};
+				CL::KernelBuffer sobelBuffer(context, sobel.data(), 3, 3, false);
+				for (int idx = 0; idx < 10; ++idx)
+				{
+					Util::SCOPED_TIMER(cl sobel);
+					convolution.convolution(queue, input_gray, convoOutput, wid, hi, sobelBuffer);
+				}
+#else
+				for (int idx = 0; idx < 10; ++idx)
+				{
+					Util::SCOPED_TIMER(cl sobel);
+					convolution.sharpen_laplacian(queue, input_gray, convoOutput, wid, hi);
+				}
+#endif
+				CL::download(queue, convoOutput, convoImg.data, pxCount);
+				cv::imwrite("lena_cl_sobel.jpg", convoImg);
+			}
+		}
 
 		cv::Mat runByCL(hi, wid, CV_8U);
 		CL::download(queue, output, runByCL.data, pxCount);
-
 		cv::imwrite("lena_brightend_cl.jpg", runByCL);
 
 

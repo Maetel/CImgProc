@@ -15,7 +15,7 @@ namespace CIMGPROC::CL
 	{
 	}
 
-	void CLDifference::rebuildProgram(std::string const& option)
+	void CLDifference::rebuildProgram()
 	{
 		program = this->buildProgram("array_difference.cl");
 	}

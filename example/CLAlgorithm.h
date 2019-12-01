@@ -13,8 +13,8 @@ namespace CIMGPROC::CL
 	class CLAlgorithm
 	{
 	public:
-		void build(std::string const& option = "");
-		virtual void rebuildProgram(std::string const& option) = 0;
+		void build();
+		virtual void rebuildProgram() = 0;
 
 	public:
 		cl::Context context() { return (_CLInstance::instance()->context()); }
@@ -27,7 +27,7 @@ namespace CIMGPROC::CL
 		CLAlgorithm(int size1, int size2) : m_localSize(size1, size2) {};
 		CLAlgorithm(int size1, int size2, int size3) : m_localSize(size1, size2, size3) {};
 
-		cl::Program buildProgram(std::string const& filePath);
+		cl::Program buildProgram(std::string const& filePath, std::string const& options = "");
 		cl::NDRange localSize() const;
 
 		cl::NDRange setLocalSize(int);
@@ -37,6 +37,8 @@ namespace CIMGPROC::CL
 		cl::NDRange roundUpGlobalSize(int) const;
 		cl::NDRange roundUpGlobalSize(int, int) const;
 		cl::NDRange roundUpGlobalSize(int, int, int) const;
+
+		std::string kernSizeDefinition(int x, int y) const;
 
 	protected:
 		cl::NDRange m_localSize;
