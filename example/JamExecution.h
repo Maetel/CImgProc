@@ -14,6 +14,7 @@ namespace CIMGPROC
 	public:
 		void execute();
 		void runCL();
+		void runHttpsClient();
 	};
 }
 

@@ -19,6 +19,8 @@
 #include "opencv2/highgui.hpp"
 //eigen
 #include "eigen.h"
+//HttpsLib
+#include "httplib.h"
 
 namespace CIMGPROC
 {
@@ -409,6 +411,60 @@ namespace CIMGPROC
 
 		std::cout << "Program finished" << std::endl;
 	}
+
+	//test MS Azure Face API
+	void Jam::runHttpsClient()
+	{
+#ifdef CIMG_LINK_HTTPLIB
+
+		enum {HTTP = 80, HTTPS = 443};
+		httplib::Client cli(
+			"cimgproc-test1.cognitiveservices.azure.com",
+			HTTPS,
+			5
+		);
+
+		int try_count = 5;
+
+		while (try_count-- > 0)
+		{
+			httplib::Params items;
+			items.emplace("url", "https://github.com/Maetel/CImgProc/blob/master/resources/lena.jpg?raw=true");
+
+#ifndef CIMG_FACE_API_KEY
+#define CIMG_FACE_API_KEY error(define your own Face API key path)
+#endif
+			std::string jam_face_api_key = Util::fileToStr(CIMG_FACE_API_KEY);
+
+			httplib::Headers headers({
+					{"Accept", "application/json, text/plain, */*"},
+					{"Content-Type", "application/json;charset=utf-8"},
+					{"Ocp-Apim-Subscription-Key" , jam_face_api_key }
+				});
+
+			std::string body(R"({"url" : "https://github.com/Maetel/CImgProc/blob/master/resources/lena.jpg?raw=true"})");
+
+			auto res = cli.Post(
+				"https://cimgproc-test1.cognitiveservices.azure.com/vision/v2.0/analyze?visualFeatures=Faces&details=Landmarks&language=en",
+				headers,
+				body,
+				"application/json;charset=utf-8"
+			);
+
+			if (res)
+			{
+				std::cout << res->body << std::endl;
+			}
+			else
+			{
+				std::cout << "No response : " << try_count << std::endl;;
+				Sleep(1000);
+				continue;
+			}
+
+		}
+#endif
+	} // ! runHttpsClient
 }
 
 

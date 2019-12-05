@@ -23,7 +23,8 @@ namespace CIMGPROC::Util
 		return true;
 	}
 
-	inline std::string fileToStr(std::string const& filePath)
+	template<typename Text>
+	inline std::string fileToStr(Text const& filePath)
 	{
 		std::ifstream stream(filePath);
 		return std::string(

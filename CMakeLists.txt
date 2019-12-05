@@ -37,6 +37,8 @@ FOREACH(SCRIPT ${CMAKE_SCRIPTS})
     include(${SCRIPT})
 ENDFOREACH()
 
+set(JAM_FACE_API_KEY "${SRC_DIR}/private/jam_face_api.key")
+
 ######################################################
 ## macros
 ######################################################

@@ -11,7 +11,8 @@ int main(int argc, char* argv[])
 {
 	CIMGPROC::Jam jam;
 	//jam.execute();
-	jam.runCL();
+	//jam.runCL();
+	jam.runHttpsClient();
 
 	return 0;
 }
