@@ -1,7 +1,7 @@
 ## CImgProc
 * C++ Image processing algorithms
 * Header-only template functions (naive way)
-* OpenCL 1.2 implemented image processing algorithms
+* OpenCL 1.2 implemented image processing algorithms - requires install build
 
 <img src="/resources/lena example.jpg" width="400px" height="200px" title="px(픽셀) 크기 설정" alt="RubberDuck"></img><br/>
 
@@ -22,13 +22,16 @@
 
 ###### __Example dependencies__
 
-Library | Included in `3rdparty`    | Ver. dependency   | Usage                 |
---------|---------------------------|-------------------|-----------------------|
-OpenCV  | No                        | 4.1.1 / No        | Image IO              |
-Eigen   | Yes                       | 3.3.7 / No        | Matrix computation    |
-OpenCL  | Yes                       | 1.2(NVidia) / Yes | Parallel computation  |
+Library     | Included in `3rdparty`    | Ver. dependency   | Usage                 |
+------------|---------------------------|-------------------|-----------------------|
+OpenCV      | No                        | 4.1.1 / No        | Image IO              |
+Face API Key| No                        | No                | MS Azure Face API Key |
+Eigen       | Yes                       | 3.3.7 / No        | Matrix computation    |
+OpenCL      | Yes                       | 1.2(NVidia) / Yes | Parallel computation  |
+HttpLib     | Yes                       | No                | Face API HTTP Request |
 
 *<em>OpenCV version, path to lib files, and path to DLLs must be set manually on `./scripts/link_cv.cmake`</em>
+*<em>Your private `MS Azure Face API Key` is required if you want to run some examples</em>
 
 ###### __Functions__
 
