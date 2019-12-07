@@ -20,7 +20,13 @@
 //eigen
 #include "eigen.h"
 //HttpsLib
+#ifdef CIMG_LINK_HTTPLIB
 #include "httplib.h"
+#endif
+//Pico json
+#ifdef CIMG_LINK_PICOJSON
+#include "picojson.h"
+#endif
 
 namespace CIMGPROC
 {
@@ -412,57 +418,217 @@ namespace CIMGPROC
 		std::cout << "Program finished" << std::endl;
 	}
 
+	//this function will throw tons of errors
+	std::tuple<int, int, int, int> parseAzureFaceJson (std::string const& input)
+	{
+		const auto faceRectCategory = input.find(std::string(R"("faceRectangle")"));
+		const auto faceRectStart = input.find("{", faceRectCategory);
+		const auto faceRectEnd = input.find("}", faceRectCategory);
+		const auto faceRect = input.substr(faceRectStart, faceRectEnd + 1 - faceRectStart);
+		const std::string leftStr(R"("left":)");
+		const std::string topStr(R"("top":)");
+		const std::string widthStr(R"("width":)");
+		const std::string heightStr(R"("height":)");
+
+		// TODO : replace with regex
+		//	std::regex end("^(,|})$");
+		std::string end(",");
+		const auto leftPos = faceRect.find(leftStr) + leftStr.size();
+		const auto topPos = faceRect.find(topStr) + topStr.size();
+		const auto widPos = faceRect.find(widthStr) + widthStr.size();
+		const auto hiPos = faceRect.find(heightStr) + heightStr.size();
+		const auto leftEnd = faceRect.find(end, leftPos);
+		const auto topEnd = faceRect.find(end, topPos);
+		const auto widEnd = faceRect.find(end, widPos);
+		const auto hiEnd = faceRect.find("}", hiPos);
+
+		const auto leftS = faceRect.substr(leftPos, leftEnd - leftPos);
+		const auto topS = faceRect.substr(topPos, topEnd - topPos);
+		const auto widS = faceRect.substr(widPos, widEnd - widPos);
+		const auto hiS = faceRect.substr(hiPos, hiEnd - hiPos);
+
+		return { std::stoi(leftS), std::stoi(topS), std::stoi(widS), std::stoi(hiS) };
+	}
+
 	//test MS Azure Face API
 	void Jam::runHttpsClient()
 	{
-#ifdef CIMG_LINK_HTTPLIB
+#if defined(CIMG_LINK_HTTPLIB) // && (CIMG_LINK_PICOJSON)
+#ifndef CIMG_FACE_API_KEY
+#error(define your own Face API key path)
+#endif
 
-		enum {HTTP = 80, HTTPS = 443};
-		httplib::Client cli(
-			"cimgproc-test1.cognitiveservices.azure.com",
-			HTTPS,
-			5
-		);
+		//test face api
+		httplib::Client cli("cimgproc-test1.cognitiveservices.azure.com");
+		std::shared_ptr<httplib::Response> response = 0;
 
 		int try_count = 5;
-
 		while (try_count-- > 0)
 		{
-			httplib::Params items;
-			items.emplace("url", "https://github.com/Maetel/CImgProc/blob/master/resources/lena.jpg?raw=true");
-
-#ifndef CIMG_FACE_API_KEY
-#define CIMG_FACE_API_KEY error(define your own Face API key path)
-#endif
 			std::string jam_face_api_key = Util::fileToStr(CIMG_FACE_API_KEY);
-
-			httplib::Headers headers({
-					{"Accept", "application/json, text/plain, */*"},
-					{"Content-Type", "application/json;charset=utf-8"},
-					{"Ocp-Apim-Subscription-Key" , jam_face_api_key }
-				});
-
-			std::string body(R"({"url" : "https://github.com/Maetel/CImgProc/blob/master/resources/lena.jpg?raw=true"})");
-
-			auto res = cli.Post(
-				"https://cimgproc-test1.cognitiveservices.azure.com/vision/v2.0/analyze?visualFeatures=Faces&details=Landmarks&language=en",
+			httplib::Headers headers({{"Ocp-Apim-Subscription-Key" , jam_face_api_key }});
+			std::string body(R"({"url" : "https://github.com/Maetel/CImgProc/blob/master/resources/lena_doodled.jpg?raw=true"})");
+				
+			response = cli.Post(
+				"/vision/v2.0/analyze?visualFeatures=Faces&details=Landmarks&language=en",
 				headers,
 				body,
-				"application/json;charset=utf-8"
+				"application/json"
 			);
 
-			if (res)
+			if (response)
 			{
-				std::cout << res->body << std::endl;
+				std::cout << "Response found" << std::endl;
+				break;
 			}
 			else
 			{
-				std::cout << "No response : " << try_count << std::endl;;
+				std::cout << "Trying to reconnect : " << try_count << std::endl;;
 				Sleep(1000);
 				continue;
 			}
-
 		}
+
+		if (!response)
+		{
+			std::cerr << "No response. Returning..." << std::endl;
+			return;
+		}
+		else if (response->status != 200)
+		{
+			std::cerr << "Response status wrong. Returning..." << std::endl;
+			return;
+		}
+
+		//copy for manipulation and free response instance
+		const auto res_body = response->body;
+		response = nullptr;
+
+		struct Point
+		{
+			Point() = default;
+			Point(int _x, int _y) : x(_x), y(_y) {}
+			~Point() {}
+			int x, y;
+
+			std::string toString() const
+			{
+				std::ostringstream stream;
+				stream << "[x,y] = [" << x << "," << y << "]";
+				return stream.str();
+			}
+
+			double distanceFrom(Point const& other) const
+			{
+				return std::sqrt((other.x - x) * (other.x - x) + (other.y - y) * (other.y - y));
+			}
+			double distanceFrom(int x, int y) const
+			{
+				return std::sqrt((this->x - x) * (this->x - x) + (this->y - y) * (this->y - y));
+			}
+
+			static double distanceFrom(Point const& left, Point const& right)
+			{
+				return std::sqrt((left.x - right.x) * (left.x - right.x) + (left.y - right.y) * (left.y - right.y));
+			}
+		};
+
+		
+
+		struct FaceRect
+		{
+		public:
+			FaceRect() = default;
+			FaceRect(std::string const& input)
+			{
+				auto result = parseAzureFaceJson(input);
+				left = std::get<0>(result);
+				top  = std::get<1>(result);
+				wid  = std::get<2>(result);
+				hi   = std::get<3>(result);
+			}
+			~FaceRect() {}
+
+		public:
+			int left = -1;
+			int top = -1;
+			int wid = -1;
+			int hi = -1;
+
+		public:
+			
+			//returns {x,y}
+			Point leftTop() const { return Point(left, top); }
+			Point rightTop() const { return Point(left + wid, top); }
+			Point leftBottom() const { return Point(left, top + hi); }
+			Point rightBottom() const { return Point(left + wid, top + hi); }
+			Point centerPoint() const { 
+				return Point(left + (wid / 2), top + (hi / 2));
+			}
+			double farthest() const
+			{
+				return Point::distanceFrom(leftTop(), centerPoint());
+			}
+
+			bool containsPoint(Point const& point)
+			{
+				return 
+					(point.x >= leftTop().x) && (point.x < rightBottom().x) &&
+					(point.y >= leftTop().y) && (point.y < rightBottom().y);
+			}
+
+			std::string toString() const
+			{
+				std::ostringstream stream;
+				stream << "[Left, Top, Width, Height] = [" << left << ", " << top << ", " << wid << "," << hi << "]";
+				return stream.str();
+			}
+		};
+
+		FaceRect face(res_body);
+		std::cout << face.toString() << std::endl;
+		
+		cv::samples::addSamplesDataSearchPath(RESOURCES_DIR);
+		std::string lenaPath("lena.jpg");					//RGB image
+		auto lenaBGR = cv::imread(cv::samples::findFile(lenaPath));
+		const int wid = lenaBGR.cols, hi = lenaBGR.rows;
+		cv::Mat lenaGray(wid, hi, CV_8U);
+		CIMGPROC::ImageAlg::convert2Gray<CIMGPROC::ImageAlg::BGR2GRAY>(lenaBGR.data, lenaGray.data, wid* hi);
+		
+		cv::Mat lenaGrayFaceDetected(wid, hi, CV_8U);
+		cv::Mat lena_mask(wid, hi, CV_32F);
+		lena_mask.setTo(0);
+
+		const auto faceCenterPoint = face.centerPoint();
+		const auto faceRectDistance = face.farthest() * 1.0f;
+		for (int y = 0; y < hi; ++y)
+		{
+			for (int x = 0; x < wid; ++x)
+			{
+				const Point curPoint(x, y);
+#if 1
+				const auto dist = curPoint.distanceFrom(faceCenterPoint);
+				if (dist > faceRectDistance)
+					continue;
+
+				lena_mask.at<float>(y, x) = float(1 - dist / faceRectDistance);
+#else
+				if (face.containsPoint(curPoint))
+					lena_mask.at<float>(y, x) = 1;
+#endif
+			}
+		}
+
+		for (int idx = 0; idx < wid * hi; ++idx)
+		{
+			lenaGrayFaceDetected.data[idx] = ((float const*)lena_mask.data)[idx] * (lenaGray.data[idx]);
+		}
+
+		cv::imwrite("lenaGrayFaceDetected.jpg", lenaGrayFaceDetected);
+
+#else
+		std::cerr << "Library not linked. Returning..." << std::endl;
+		return;
 #endif
 	} // ! runHttpsClient
 }
