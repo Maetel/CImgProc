@@ -10,6 +10,7 @@
 #include "CLDifference.h"
 #include "CLConvert2Gray.h"
 #include "CLConvolution.h"
+#include "CLDiffuse.h"
 
 //std
 #include <functional>
@@ -590,17 +591,21 @@ namespace CIMGPROC
 		
 		cv::samples::addSamplesDataSearchPath(RESOURCES_DIR);
 		std::string lenaPath("lena.jpg");					//RGB image
+		std::string lenaPath_d("lena_doodled.jpg");					//RGB image
 		auto lenaBGR = cv::imread(cv::samples::findFile(lenaPath));
+		auto lenaBGR_d = cv::imread(cv::samples::findFile(lenaPath_d));
 		const int wid = lenaBGR.cols, hi = lenaBGR.rows;
 		cv::Mat lenaGray(wid, hi, CV_8U);
+		cv::Mat lenaGray_d(wid, hi, CV_8U);
 		CIMGPROC::ImageAlg::convert2Gray<CIMGPROC::ImageAlg::BGR2GRAY>(lenaBGR.data, lenaGray.data, wid* hi);
+		CIMGPROC::ImageAlg::convert2Gray<CIMGPROC::ImageAlg::BGR2GRAY>(lenaBGR_d.data, lenaGray_d.data, wid* hi);
 		
 		cv::Mat lenaGrayFaceDetected(wid, hi, CV_8U);
 		cv::Mat lena_mask(wid, hi, CV_32F);
 		lena_mask.setTo(0);
 
 		const auto faceCenterPoint = face.centerPoint();
-		const auto faceRectDistance = face.farthest() * 1.0f;
+		const auto faceRectDistance = face.farthest();
 		for (int y = 0; y < hi; ++y)
 		{
 			for (int x = 0; x < wid; ++x)
@@ -625,6 +630,81 @@ namespace CIMGPROC
 		}
 
 		cv::imwrite("lenaGrayFaceDetected.jpg", lenaGrayFaceDetected);
+
+		//median for diffuse
+		cv::Mat medianed(wid, hi, CV_8U);
+		if(0)
+		{
+			{
+				//median for diffuse
+				Util::SCOPED_TIMER(Median for diffuse);
+				CIMGPROC::ImageAlg::medianFilter(lenaGray.data, medianed.data, wid, hi, 15);
+			}
+			cv::imwrite("lena_medianed.jpg", medianed);
+		}
+		else
+		{
+			//load premaid
+			medianed = cv::imread("lena_medianed.jpg", cv::IMREAD_GRAYSCALE);
+		}
+
+		//diffuse
+		{
+			cv::Mat diffused(wid, hi, CV_8U);
+			{
+				//diffuse with ratio
+				Util::SCOPED_TIMER(diffuse with ratio);
+				CIMGPROC::ImageAlg::diffuse(lenaGray.data, lenaGrayFaceDetected.data, 0.5, diffused.data, wid* hi);
+			}
+			cv::imwrite("lenaDiffused_ratio.jpg", diffused);
+
+			{
+				//diffuse with mask
+				Util::SCOPED_TIMER(diffuse with mask);
+				CIMGPROC::ImageAlg::diffuse(medianed.data, lenaGray.data, (float const*)lena_mask.data, diffused.data, wid * hi);
+			}
+			cv::imwrite("lenaDiffused_mask.jpg", diffused);
+		}
+
+		//prepare cl buffers
+		auto context = CLInstance.context();
+		auto queue = cl::CommandQueue(context);
+
+		//diffuse with CL
+		{
+			cl_int err;
+			cl::Buffer grayBuf(context, CL_MEM_READ_ONLY, wid* hi);
+			cl::Buffer medianBuf(context, CL_MEM_READ_ONLY, wid* hi);
+			cl::Buffer maskBuf(context, CL_MEM_READ_ONLY, wid* hi * sizeof(float));
+			cl::Buffer diffuseBuf(context, CL_MEM_WRITE_ONLY, wid* hi);
+
+			queue.enqueueWriteBuffer(grayBuf, false, 0, wid* hi, lenaGray.data);
+			queue.enqueueWriteBuffer(medianBuf, false, 0, wid* hi, medianed.data);
+			queue.enqueueWriteBuffer(maskBuf, true, 0, wid* hi * sizeof(float), lena_mask.data);
+			queue.flush();
+			queue.finish();
+
+			CIMGPROC::CL::CLDiffuse diffuser;
+			diffuser.build();
+			cv::Mat diffused(wid, hi, CV_8U);
+			for(int idx = 0; idx < 10; ++idx)
+			{
+				//diffuse with mask cl
+				Util::SCOPED_TIMER(diffuse with mask cl);
+				diffuser.diffuse(queue, grayBuf, medianBuf, diffuseBuf, maskBuf, wid* hi);
+			}
+			CIMGPROC::CL::download(queue, diffuseBuf, diffused.data, wid* hi);
+			cv::imwrite("lenaDiffused_mask_cl.jpg", diffused);
+
+			for (int idx = 0; idx < 10; ++idx)
+			{
+				//diffuse with mask cl
+				Util::SCOPED_TIMER(diffuse with ratio cl);
+				diffuser.diffuse(queue, grayBuf, medianBuf, diffuseBuf, 0.1f, wid * hi);
+			}
+			CIMGPROC::CL::download(queue, diffuseBuf, diffused.data, wid* hi);
+			cv::imwrite("lenaDiffused_ratio_cl.jpg", diffused);
+		}
 
 #else
 		std::cerr << "Library not linked. Returning..." << std::endl;

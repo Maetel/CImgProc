@@ -657,6 +657,41 @@ namespace CIMGPROC
 			}
 		}
 
+		template <typename TIn, typename TOut, typename TMask>
+		void diffuse(TIn const* input1, TIn const* input2, TMask const* mask, TOut *output, int length)
+		{
+			if (nullptr == input1 || nullptr == input2 || nullptr == mask || nullptr == output || length <= 0)
+				return;
+
+			constexpr auto MaskMax =
+				std::is_same<TMask, uint8_t>::value ? 255 :
+				std::is_same<TMask, float>::value ? 1.0f :
+				//std::is_same<TMask, double>::value ? 1.0 :
+				1.0;
+
+			for (int idx = 0; idx < length; ++idx)
+			{
+				const auto val1 = input1[idx];
+				const auto val2 = input2[idx];
+				const auto maskVal = mask[idx];
+				output[idx] = val1 * (1. - double(maskVal / double(MaskMax))) + val2 * double(maskVal /double(MaskMax));
+			}
+		}
+
+		template <typename TIn, typename TOut>
+		void diffuse(TIn const* input1, TIn const* input2, double ratio_1to2, TOut* output, int length)
+		{
+			if (nullptr == input1 || nullptr == input2 || ratio_1to2 < 0. || ratio_1to2 > 1. || nullptr == output || length <= 0)
+				return;
+
+			for (int idx = 0; idx < length; ++idx)
+			{
+				const auto val1 = input1[idx];
+				const auto val2 = input2[idx];
+				output[idx] = TOut(double(val1 * (ratio_1to2)) + double(val2 * (1. - ratio_1to2)));
+			}
+		}
+
 	} //!ImageAlg
 }
 #endif //!CIMGPROC_IMAGEALG_H
