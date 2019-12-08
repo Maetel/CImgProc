@@ -42,17 +42,18 @@ mean/variance/deviation
 
 * <em>Naive image data manipulation</em>
 1. Convert color image to gray
-3. Binarization - 
+1. Binarization - 
 (i) Image histogram 
 (ii) Binarization - Threshold/Otsu
-4. Template matching - 
+1. Template matching - 
 (i) Normalized Cross Correlation (NCC) 
 (ii) Zero Normalized Cross Correlation (ZNCC)
-6. Image convolution -
+1. Image convolution -
 (i) Convolution with manual kernels 
 (ii) Gaussian blur (Gaussian kernel generation) 
 (iii) Derivative (naive, Sobel, Scharr) 
 (iv) Difference of Gaussian (DoG) 
+1. Diffuse - (i) mask (ii) ratio
 
 * <em>OpenCL Implementation</em>
 1. Array difference(distance)
@@ -61,6 +62,7 @@ mean/variance/deviation
 (i) Convolution with manual kernels 
 (ii) Gaussian blur (Gaussian kernel generation) 
 (iii) Derivative (naive, Sobel, Scharr) 
+1. Diffuse - (i) mask (ii) ratio
 
 ---
 
