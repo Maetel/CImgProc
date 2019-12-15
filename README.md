@@ -54,6 +54,7 @@ mean/variance/deviation
 (iii) Derivative (naive, Sobel, Scharr) 
 (iv) Difference of Gaussian (DoG) 
 1. Diffuse - (i) mask (ii) ratio
+1. Color magnet
 
 * <em>OpenCL Implementation</em>
 1. Array difference(distance)
