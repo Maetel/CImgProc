@@ -12,7 +12,8 @@ int main(int argc, char* argv[])
 	CIMGPROC::Jam jam;
 	//jam.execute();
 	//jam.runCL();
-	jam.runHttpsClient();
+	//jam.runHttpsClient();
+	jam.colorMagnet();
 
 	return 0;
 }

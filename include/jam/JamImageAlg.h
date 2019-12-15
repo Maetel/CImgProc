@@ -692,6 +692,42 @@ namespace CIMGPROC
 			}
 		}
 
+		// computes Euclidian RGB distance
+		// throws exception if input is nullptr
+		template <int Channel = 3, typename RetType = double>
+		RetType colorDistance(uint8_t const* colorA, uint8_t const* colorB)
+		{
+			double sum = 0.;
+			for (int idx = 0; idx < Channel; ++idx)
+			{
+				sum += (colorA[idx] - colorB[idx]) * (colorA[idx] - colorB[idx]);
+			}
+			return static_cast<RetType>(std::sqrt(sum));
+		}
+
+		template <int Channel = 3>
+		void colorMagnet(uint8_t const* input, uint8_t * output, int length, uint8_t const* dstColors, int colorsLength)
+		{
+			const int dstColorsIter = colorsLength / Channel;
+			for (int idx = 0; idx < length; ++idx)
+			{
+				double meanDist = 255 * Channel;
+				uint8_t curColor[Channel];
+				memcpy(curColor, input + (idx * Channel), sizeof(uint8_t) * Channel);
+				int meanDistColorIdx = 0;
+				for (int clrIdx = 0; clrIdx < dstColorsIter; ++clrIdx)
+				{
+					const auto colorDist = colorDistance<Channel>(curColor, dstColors + (clrIdx * Channel));
+					if (meanDist > colorDist)
+					{
+						meanDist = colorDist;
+						meanDistColorIdx = clrIdx;
+					}
+				}
+				memcpy(output + (idx * Channel), dstColors + (meanDistColorIdx * Channel), sizeof(uint8_t) * Channel);
+			}
+		}
+
 	} //!ImageAlg
 }
 #endif //!CIMGPROC_IMAGEALG_H

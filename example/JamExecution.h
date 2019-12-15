@@ -15,6 +15,7 @@ namespace CIMGPROC
 		void execute();
 		void runCL();
 		void runHttpsClient();
+		void colorMagnet();
 	};
 }
 

@@ -711,6 +711,39 @@ namespace CIMGPROC
 		return;
 #endif
 	} // ! runHttpsClient
+	void Jam::colorMagnet()
+	{
+		cv::samples::addSamplesDataSearchPath(RESOURCES_DIR);
+		std::string lenaPath("lena.jpg");					//RGB image
+		auto lenaBGR = cv::imread(cv::samples::findFile(lenaPath));
+		const int wid = lenaBGR.cols, hi = lenaBGR.rows, pxCount = wid * hi;
+
+		cv::Mat lena_magnet(hi, wid, CV_8UC3);
+		// color combo from https://www.designwizard.com/blog/design-trends/colour-combination
+		// color order in BGR
+		std::vector<uint8_t> dstColors =
+		{
+#if 1
+			0xbd, 0x3c, 0x96,
+			0x61, 0x6f, 0xff,
+			0x9b, 0x29, 0xc5,
+			0x51, 0xae, 0xfe,
+#else
+			0xe2, 0xdd, 0xff,
+			0x94, 0xa0, 0xfa,
+			0xcc, 0xd9, 0x9e,
+			0x76, 0x8c, 0x00
+#endif
+		};
+
+		constexpr int Channel = 3;
+		{
+			//8-9ms in release
+			Util::SCOPED_TIMER(Color magnet);
+			CIMGPROC::ImageAlg::colorMagnet<Channel>(lenaBGR.data, lena_magnet.data, wid * hi, dstColors.data(), dstColors.size());
+		}
+		cv::imwrite("lena_magnet.jpg", lena_magnet);
+	}
 }
 
 
