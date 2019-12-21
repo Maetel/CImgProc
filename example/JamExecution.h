@@ -42,6 +42,15 @@ bool _loadImage##_ch(std::string const& path, uint8_t* &data, int& wid, int& hi)
 		void loadImageTester();
 		void convert2Gray();
 		void histogram();
+		void NCC();
+		void ZNCC();
+		void binarization();
+
+		void gaussian();
+
+		void derivation();
+
+		void convolution();
 
 		void execute();
 		void runCL();

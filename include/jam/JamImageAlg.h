@@ -61,6 +61,16 @@ namespace CIMGPROC::ImageAlg
 			}
 		} //!convert2Gray
 
+		template <int dstChannel, int Channel, typename T>
+		void extractChannel(T const* input, T* output, int length)
+		{
+			if (nullptr == input || nullptr == output)
+				return;
+
+			for (int idx = 0; idx < length; ++idx)
+				output[idx] = input[idx * Channel + dstChannel];
+		}
+
 		template <int Channel = 1, typename T = int>
 		inline void histogram(uint8_t const* input, int length, T* output)
 		{
@@ -374,6 +384,72 @@ namespace CIMGPROC::ImageAlg
 
 			convolution(input, output, wid, hi, gaussianKernel.data(), kernelSize, kernelSize);
 		} //!gaussianConvolution
+
+		template <typename T1, typename T2 = T1>
+		inline void sobelDx(T1 const* input, T2* output, int wid, int hi)
+		{
+			if (nullptr == input || nullptr == output || 0 >= wid || 0 >= hi)
+				return;
+
+			constexpr int sobelDxKernel[]
+			{
+				1, 0, -1,
+				3, 0, -3,
+				1, 0, -1
+			};
+
+			ImageAlg::convolution(input, output, wid, hi, sobelDxKernel, 3, 3);
+		} //!sobelDx
+
+		template <typename T1, typename T2 = T1>
+		inline void sobelDy(T1 const* input, T2 * output, int wid, int hi)
+		{
+			if (nullptr == input || nullptr == output || 0 >= wid || 0 >= hi)
+				return;
+
+			constexpr int sobelDyKernel[]
+			{
+				1, 3, 1,
+				0, 0, 0,
+				-1, -3, -1
+			};
+
+			ImageAlg::convolution(input, output, wid, hi, sobelDyKernel, 3, 3);
+		} //!sobelDy
+
+		template <typename T1, typename T2 = T1>
+		inline void scharrDx(T1 const* input, T2 * output, int wid, int hi)
+		{
+			if (nullptr == input || nullptr == output || 0 >= wid || 0 >= hi)
+				return;
+
+			//https://en.wikipedia.org/wiki/Sobel_operator
+			constexpr int scharrDxKernel[]
+			{
+				47, 0, -47,
+				162, 0, -162,
+				47, 0, -47
+			};
+
+			ImageAlg::convolution(input, output, wid, hi, scharrDxKernel, 3, 3);
+		} //!scharrDx
+
+		template <typename T1, typename T2 = T1>
+		inline void scharrDy(T1 const* input, T2 * output, int wid, int hi)
+		{
+			if (nullptr == input || nullptr == output || 0 >= wid || 0 >= hi)
+				return;
+
+			//https://en.wikipedia.org/wiki/Sobel_operator
+			constexpr int scharrDyKernel[]
+			{
+				47, 162, 47,
+				0, 0, 0,
+				-47, -162, -47
+			};
+
+			ImageAlg::convolution(input, output, wid, hi, scharrDyKernel, 3, 3);
+		} //!scharrDy
 
 		template <typename T1, typename T2 = T1>
 		inline void difference(T1 const* input1, T1 const* input2, int length, T2 * output, double* sum_of_distance = nullptr)

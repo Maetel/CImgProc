@@ -13,7 +13,12 @@ int main(int argc, char* argv[])
 	
 	//jam.loadImageTester();
 	//jam.convert2Gray();
-	jam.histogram();
+	//jam.histogram();
+	//jam.NCC();
+	//jam.binarization();
+	//jam.gaussian();
+	//jam.derivation();
+	jam.convolution();
 
 	//jam.execute();
 	//jam.runCL();

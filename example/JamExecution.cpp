@@ -121,6 +121,11 @@ bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int
 		}
 		const int pxCount = wid * hi;
 
+		auto speakHistogram = [](int const* histogram) 
+		{
+			for (int intensity = 0; intensity < 256; ++intensity)
+				std::cout << "Intensity[" << intensity << "] value[" << histogram[intensity] << "]" << std::endl;
+		};
 
 		//gray
 		int histogram_gray[256];
@@ -130,8 +135,7 @@ bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int
 		}
 		std::cout << "========================================================================" << std::endl;
 		std::cout << " [Histogram - gray]" << std::endl;
-		for (int intensity = 0; intensity < 256; ++intensity)
-			std::cout << "Intensity[" << intensity << "] value[" << histogram_gray[intensity] << "]" << std::endl;
+		speakHistogram(histogram_gray);
 
 		//BGR
 		int histogram_BGR[3 * 256];
@@ -139,9 +143,237 @@ bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int
 			Util::SCOPED_TIMER(histogram BGR);
 			ImageAlg::histogram<3>(lena, pxCount, histogram_BGR);
 		}
+		int histogram_B[256];
+		int histogram_G[256];
+		int histogram_R[256];
+		ImageAlg::extractChannel<0, 3>(histogram_BGR, histogram_B, 256);
+		ImageAlg::extractChannel<1, 3>(histogram_BGR, histogram_G, 256);
+		ImageAlg::extractChannel<2, 3>(histogram_BGR, histogram_R, 256);
 		std::cout << "========================================================================" << std::endl;
-		std::cout << " [Histogram - BGR]" << std::endl;
-		std::cout << histogram_BGR << std::endl;
+		std::cout << " [Histogram - B]" << std::endl;
+		speakHistogram(histogram_B);
+		std::cout << " [Histogram - G]" << std::endl;
+		speakHistogram(histogram_G);
+		std::cout << " [Histogram - R]" << std::endl;
+		speakHistogram(histogram_R);
+		
+		delete[] lena;
+		delete[] gray;
+	}
+
+	void Jam::NCC()
+	{
+		uint8_t *lenaBGR = 0, *lenaGray = 0;
+		uint8_t *lenaDdlBGR = 0, *lenaDdlGray = 0; // doodled
+		uint8_t* lenaFaceBGR = 0, *lenaFaceGray = 0;
+		int wid, hi, wid_ddl, hi_ddl;
+		int wid_face, hi_face;
+		loadBGRandMakeGray("lena.jpg", lenaBGR, lenaGray, wid, hi);
+		loadBGRandMakeGray("lena_doodled.jpg", lenaDdlBGR, lenaDdlGray, wid_ddl, hi_ddl);
+		loadBGRandMakeGray("lena_face.png", lenaFaceBGR, lenaFaceGray, wid_face, hi_face);
+		if (wid != wid_ddl || hi != hi_ddl)
+			return;
+		const int pxCount = wid * hi;
+
+
+		double NCCVal;
+		//of the same size
+		{
+			const int increment = 3; //this will skip pixels and speed up
+			Util::SCOPED_TIMER(NCC Val of original and doodled);
+			NCCVal = ImageAlg::NCC(lenaGray, lenaDdlGray, pxCount, increment);
+		}
+		std::cout << "NCC Val of original and doodled : " << NCCVal << std::endl;
+
+		// find face
+		//  * this naive approach takes tons of time...
+		//	* needs to be improved by i)parallel ii)dynamic iii)what else?
+		double* outputs = nullptr;
+		std::pair<int, int> bestMatchPx({ -1,-1 });	// x, y = col, row
+		double bestMatchValue = 0.;
+		{
+			const int increment = 3; //this will skip pixels and speed up
+			Util::SCOPED_TIMER(NCC - find face);
+			ImageAlg::NCC(
+				lenaGray, wid, hi,
+				lenaFaceGray, wid_face, hi_face,
+				outputs, increment,
+				&bestMatchPx, &bestMatchValue
+			);
+		}
+		std::cout <<
+			"NCC - find face\n" <<
+			"Px that best matches (Left top corner) [x,y] = [" << bestMatchPx.first << ", " << bestMatchPx.second << "]\n" <<
+			"Best matching value : " << bestMatchValue << std::endl;
+		{
+			delete outputs;
+			outputs = nullptr;
+		}
+
+		delete[] lenaBGR;
+		delete[] lenaGray;
+		delete[] lenaDdlBGR;
+		delete[] lenaDdlGray;
+	}
+
+	void Jam::ZNCC()
+	{
+		uint8_t* lenaBGR = 0, * lenaGray = 0;
+		uint8_t* lenaDdlBGR = 0, * lenaDdlGray = 0; // doodled
+		int wid, hi, wid_ddl, hi_ddl;
+		int wid_face, hi_face;
+		loadBGRandMakeGray("lena.jpg", lenaBGR, lenaGray, wid, hi);
+		loadBGRandMakeGray("lena_doodled.jpg", lenaDdlBGR, lenaDdlGray, wid_ddl, hi_ddl);
+		if (wid != wid_ddl || hi != hi_ddl)
+			return;
+		const int pxCount = wid * hi;
+
+		double ZNCCVal = HUGE_VAL;
+		{
+			Util::SCOPED_TIMER(ZNCC);
+			ZNCCVal = ImageAlg::ZNCC(lenaGray, lenaDdlGray, pxCount);
+		}
+		std::cout << "ZNCC value : " << ZNCCVal << std::endl;
+
+		delete[] lenaBGR;
+		delete[] lenaGray;
+		delete[] lenaDdlBGR;
+		delete[] lenaDdlGray;
+	}
+
+	void Jam::binarization()
+	{
+		uint8_t* lenaBGR = 0, * lenaGray = 0;
+		int wid, hi;
+		if (!loadBGRandMakeGray("lena.jpg", lenaBGR, lenaGray, wid, hi))
+			return;
+		const int pxCount = wid * hi;
+
+		uint8_t* lena_binarized = new uint8_t[pxCount];
+		double otsu_thres;
+		{
+			Util::SCOPED_TIMER(Otsu binarization);
+			ImageAlg::binarize(lenaGray, lena_binarized, pxCount, &otsu_thres);
+		}
+		cv::Mat binarizedImg(hi, wid, CV_8U, lena_binarized);
+		cv::imwrite("lena_otsu.bmp", binarizedImg);
+		std::cout << "Otsu binarization threshold : " << otsu_thres << std::endl;
+
+		{
+			Util::SCOPED_TIMER(Threshold binarization);
+			int binThres = 128;
+			ImageAlg::binarize<ImageAlg::THRESHOLD>(lenaGray, lena_binarized, pxCount, &binThres);
+		}
+		cv::imwrite("lena_binarized.jpg", binarizedImg);
+
+		delete[] lenaBGR;
+		delete[] lenaGray;
+		delete[] lena_binarized;
+	}
+
+	void Jam::gaussian()
+	{
+		uint8_t* lenaBGR = 0, * lenaGray = 0;
+		int wid, hi;
+		if (!loadBGRandMakeGray("lena.jpg", lenaBGR, lenaGray, wid, hi))
+			return;
+		const int pxCount = wid * hi;
+
+		uint8_t* lena_gaussed = new uint8_t[pxCount];
+		const int kern_size = 7;
+		const double gaussian_sigma = 2.0;
+		{
+			Util::SCOPED_TIMER(gaussian convolution);
+			ImageAlg::gaussianConvolution(lenaGray, lena_gaussed, wid, hi, kern_size, gaussian_sigma);
+		}
+		cv::Mat lena_gauss(hi, wid, CV_8U, lena_gaussed);
+		cv::imwrite("lena_gauss.jpg", lena_gauss);
+		
+		delete[] lenaBGR;
+		delete[] lenaGray;
+		delete[] lena_gaussed;
+	}
+
+	void Jam::derivation()
+	{
+		uint8_t* lenaBGR = 0, * lenaGray = 0;
+		int wid, hi;
+		if (!loadBGRandMakeGray("lena.jpg", lenaBGR, lenaGray, wid, hi))
+			return;
+		const int pxCount = wid * hi;
+
+		cv::Mat derivedImg;
+		float* lena_derived = new float[pxCount];
+		
+		//sobel dx
+		{
+			Util::SCOPED_TIMER(sobel dx);
+			ImageAlg::sobelDx(lenaGray, lena_derived, wid, hi);
+		}
+		derivedImg = cv::Mat(hi, wid, CV_32F, lena_derived);
+		cv::imwrite("lena_sobelDx.jpg", derivedImg);
+
+		//sobel dy
+		{
+			Util::SCOPED_TIMER(sobel dy);
+			ImageAlg::sobelDy(lenaGray, lena_derived, wid, hi);
+		}
+		derivedImg = cv::Mat(hi, wid, CV_32F, lena_derived);
+		cv::imwrite("lena_sobelDy.jpg", derivedImg);
+
+		//scharr dx
+		{
+			Util::SCOPED_TIMER(scharr dx);
+			ImageAlg::scharrDx(lenaGray, lena_derived, wid, hi);
+		}
+		derivedImg = cv::Mat(hi, wid, CV_32F, lena_derived);
+		cv::imwrite("lena_scharrDx.jpg", derivedImg);
+
+		//scharr dy
+		{
+			Util::SCOPED_TIMER(scharr dy);
+			ImageAlg::scharrDy(lenaGray, lena_derived, wid, hi);
+		}
+		derivedImg = cv::Mat(hi, wid, CV_32F, lena_derived);
+		cv::imwrite("lena_scharrDy.jpg", derivedImg);
+
+		delete[] lenaBGR;
+		delete[] lenaGray;
+		delete[] lena_derived;
+	}
+
+	void Jam::convolution()
+	{
+		uint8_t* lenaBGR = 0, * lenaGray = 0;
+		int wid, hi;
+		if (!loadBGRandMakeGray("lena.jpg", lenaBGR, lenaGray, wid, hi))
+			return;
+		const int pxCount = wid * hi;
+
+		uint8_t* lena_convo= new uint8_t[pxCount];
+		constexpr int convoKernel[] =
+		{
+			1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 0, 0, 0, 0, 0, 0, 0, 1,
+			1, 0, 0, 0, 0, 0, 0, 0, 1,
+			1, 0, 0, 0, -3, 0, 0, 0, 1,
+			1, 0, 0, -3, 0, -3, 0, 0, 1,
+			1, 0, 0, 0, -3, 0, 0, 0, 1,
+			1, 0, 0, 0, 0, 0, 0, 0, 1,
+			1, 0, 0, 0, 0, 0, 0, 0, 1,
+			1, 1, 1, 1, 1, 1, 1, 1, 1
+		};
+
+		{
+			Util::SCOPED_TIMER(convo);
+			ImageAlg::convolution(lenaGray, lena_convo, wid, hi, convoKernel, 9, 9);
+		}
+		cv::Mat convoImg(hi, wid, CV_8U, lena_convo);
+		cv::imwrite("lena_convo.bmp", convoImg);
+
+		delete[] lenaBGR;
+		delete[] lenaGray;
+		delete[] lena_convo;
 	}
 
 	void Jam::execute()
@@ -270,7 +502,7 @@ bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int
 				Util::SCOPED_TIMER(Otsu binarization);
 				ImageAlg::binarize(lenaGray.data, lena_otsu.data, pxCount);
 				//int binThres = 50;
-				//ImageAlg::binarize<ImageAlg::THRESHOLD>(lenaGray.data, lena_otsu.data, pxCount, &binThres);
+				//ImageAlg::binarize<ImageAlg::THRESHOLD>(lenaGray.data, lena_binarized.data, pxCount, &binThres);
 
 			}
 			cv::imwrite("lena_Otsu.jpg", lena_otsu);
