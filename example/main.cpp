@@ -10,10 +10,15 @@
 int main(int argc, char* argv[])
 {
 	CIMGPROC::Jam jam;
+	
+	//jam.loadImageTester();
+	//jam.convert2Gray();
+	jam.histogram();
+
 	//jam.execute();
 	//jam.runCL();
 	//jam.runHttpsClient();
-	jam.colorMagnet();
+	//jam.colorMagnet();
 
 	return 0;
 }

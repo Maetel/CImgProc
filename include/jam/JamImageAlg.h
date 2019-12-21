@@ -9,10 +9,8 @@
 #include "Jam/JamMath.h"
 #include <utility>
 
-namespace CIMGPROC
+namespace CIMGPROC::ImageAlg
 {
-	namespace ImageAlg
-	{
 		// TODO list
 		//	* up/down sampling (bilinear, bicubic)
 		//	* demosaic (bayer2rgb)
@@ -727,7 +725,5 @@ namespace CIMGPROC
 				memcpy(output + (idx * Channel), dstColors + (meanDistColorIdx * Channel), sizeof(uint8_t) * Channel);
 			}
 		}
-
-	} //!ImageAlg
 }
 #endif //!CIMGPROC_IMAGEALG_H

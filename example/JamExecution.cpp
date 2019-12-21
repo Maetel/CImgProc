@@ -31,6 +31,119 @@
 
 namespace CIMGPROC
 {
+#define DEF_LOAD_IMAGE(_ch) \
+bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int& hi) \
+{ \
+	cv::samples::addSamplesDataSearchPath(RESOURCES_DIR); \
+	auto img = cv::imread(cv::samples::findFile(path)); \
+	if (img.empty()) \
+		return false; \
+	if (data) \
+		delete data; \
+	const int _wid = img.cols, _hi = img.rows; \
+	data = new uint8_t[_wid * _hi * _ch]; \
+	memcpy(data, img.data, _wid * _hi * _ch); \
+	wid = _wid; \
+	hi = _hi; \
+	return true; \
+}
+
+	DEF_LOAD_IMAGE(1);
+	DEF_LOAD_IMAGE(2);
+	DEF_LOAD_IMAGE(3);
+	DEF_LOAD_IMAGE(4);
+
+
+	bool Jam::loadBGRandMakeGray(std::string const& path, uint8_t*& bgr, uint8_t*& gray, int& wid, int& hi)
+	{
+		if (!_loadImage3(path, bgr, wid, hi))
+			return false;
+		
+		if (gray)
+			delete gray;
+		
+		gray = new uint8_t[wid * hi];
+		ImageAlg::convert2Gray<ImageAlg::BGR2GRAY>(bgr, gray, wid * hi);
+
+		return true;
+	}
+
+	void Jam::loadImageTester()
+	{
+		const std::string path = "lena.jpg";
+		uint8_t* bgr = 0, *gray = 0;
+		int wid, hi;
+		if (!loadBGRandMakeGray(path, bgr, gray, wid, hi))
+		{
+			std::cout << "No image or image path not correct" << std::endl;
+			return;
+		}
+		
+		cv::Mat bgrImg(hi, wid, CV_8UC3, bgr);
+		cv::Mat grayImg(hi, wid, CV_8U, gray);
+
+		{
+			//write loaded & made image
+			cv::imwrite("bgrLoaded.bmp", bgrImg);
+			cv::imwrite("bgr2Gray.bmp", grayImg);
+		}
+	}
+
+	void Jam::convert2Gray()
+	{
+		uint8_t* lena = 0;
+		int wid, hi;
+		if (!loadImage(std::string("lena.jpg"), lena, wid, hi))
+			return;
+
+		uint8_t* gray = new uint8_t[wid * hi];
+		ImageAlg::convert2Gray<ImageAlg::BGR2GRAY>(lena, gray, wid * hi);
+
+		{
+			//show with cv::Mat
+			cv::Mat grayImg(hi, wid, CV_8U, gray);
+			cv::imwrite("lenaGray.bmp", grayImg);
+		}
+		
+		delete lena;
+		delete gray;
+	}
+
+	void Jam::histogram()
+	{
+		const std::string path = "lena.jpg";
+		uint8_t* lena = 0, * gray = 0;
+		int wid, hi;
+		if (!loadBGRandMakeGray(path, lena, gray, wid, hi))
+		{
+			std::cout << "No image or image path not correct" << std::endl;
+			return;
+		}
+		const int pxCount = wid * hi;
+
+
+		//gray
+		int histogram_gray[256];
+		{
+			Util::SCOPED_TIMER(histogram gray);
+			ImageAlg::histogram(gray, pxCount, histogram_gray);
+		}
+		std::cout << "========================================================================" << std::endl;
+		std::cout << " [Histogram - gray]" << std::endl;
+		for (int intensity = 0; intensity < 256; ++intensity)
+			std::cout << "Intensity[" << intensity << "] value[" << histogram_gray[intensity] << "]" << std::endl;
+
+		//BGR
+		int histogram_BGR[3 * 256];
+		{
+			Util::SCOPED_TIMER(histogram BGR);
+			ImageAlg::histogram<3>(lena, pxCount, histogram_BGR);
+		}
+		std::cout << "========================================================================" << std::endl;
+		std::cout << " [Histogram - BGR]" << std::endl;
+		std::cout << histogram_BGR << std::endl;
+	}
+
 	void Jam::execute()
 	{
 		cv::samples::addSamplesDataSearchPath(RESOURCES_DIR);
