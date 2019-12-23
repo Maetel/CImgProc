@@ -10,15 +10,13 @@
 
 #set path
 set(OPENCV_DIR "C:/work/srcs/opencv")
-set(OPENCV_VERSION "4.1.0")
+set(OPENCV_VERSION "4.1.1")
 string(REPLACE "." "" OPENCV_VERSION_CLEARED ${OPENCV_VERSION})
 set(OPENCV_BUILD "${OPENCV_DIR}/opencv-${OPENCV_VERSION}/build")
-
 if(NOT EXISTS ${OPENCV_BUILD})
     message(FATAL_ERROR "Please set OpenCV path and version")
-    message("OPENCV_BUILD : ${OPENCV_BUILD}")
 endif()
-set(OPENCV_INCLUDE "${OPENCV_BUILD}/include")
+set(OPENCV_INCLUDE "${OPENCV_BUILD}/install/include")
 set(OPENCV_LIB_DIR "${OPENCV_BUILD}/lib")
 set(OPENCV_LIB_OPTIMIZED "${OPENCV_LIB_DIR}/Release/opencv_world${OPENCV_VERSION_CLEARED}.lib")
 set(OPENCV_LIB_DEBUG "${OPENCV_LIB_DIR}/Debug/opencv_world${OPENCV_VERSION_CLEARED}d.lib")
