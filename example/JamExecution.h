@@ -45,17 +45,14 @@ bool _loadImage##_ch(std::string const& path, uint8_t* &data, int& wid, int& hi)
 		void NCC();
 		void ZNCC();
 		void binarization();
-
 		void gaussian();
-
 		void derivation();
-
 		void convolution();
+		void colorMagnet();
 
 		void execute();
 		void runCL();
 		void runHttpsClient();
-		void colorMagnet();
 	};
 }
 

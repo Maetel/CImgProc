@@ -376,6 +376,51 @@ bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int
 		delete[] lena_convo;
 	}
 
+	void Jam::colorMagnet()
+	{
+		uint8_t* lenaBGR = 0, *lenaGray = 0;
+		int wid, hi;
+		if (!loadBGRandMakeGray("lena.jpg", lenaBGR, lenaGray, wid, hi))
+			return;
+		const int pxCount = wid * hi;
+
+		constexpr auto colorMagnetChannel = 3;
+		uint8_t* lena_magnet = new uint8_t[pxCount * colorMagnetChannel];
+
+		// color combo from https://www.designwizard.com/blog/design-trends/colour-combination
+		// color order in BGR
+		uint8_t dstColors[] =
+		{
+#if 1
+			0xbd, 0x3c, 0x96,
+			0x61, 0x6f, 0xff,
+			0x9b, 0x29, 0xc5,
+			0x51, 0xae, 0xfe,
+#else
+			0xe2, 0xdd, 0xff,
+			0x94, 0xa0, 0xfa,
+			0xcc, 0xd9, 0x9e,
+			0x76, 0x8c, 0x00
+#endif
+		};
+
+		// 'dstColorSize' will be divided by 'Channel' inside the function for computation
+		const auto dstColorsSize = sizeof(dstColors) / sizeof(uint8_t); 
+		constexpr int Channel = 3;
+		{
+			//8-9ms in release
+			Util::SCOPED_TIMER(Color magnet);
+			CIMGPROC::ImageAlg::colorMagnet<Channel>(lenaBGR, lena_magnet, wid * hi, dstColors, dstColorsSize);
+		}
+
+		cv::Mat magnetImg(hi, wid, CV_8UC3, lena_magnet);
+		cv::imwrite("lena_magnet.jpg", magnetImg);
+
+		delete[] lenaBGR;
+		delete[] lenaGray;
+		delete[] lena_magnet;
+	}
+
 	void Jam::execute()
 	{
 		cv::samples::addSamplesDataSearchPath(RESOURCES_DIR);
@@ -764,7 +809,7 @@ bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int
 		std::cout << "Program finished" << std::endl;
 	}
 
-	//this function will throw tons of errors
+	//this function's not ready for exception handling
 	std::tuple<int, int, int, int> parseAzureFaceJson (std::string const& input)
 	{
 		const auto faceRectCategory = input.find(std::string(R"("faceRectangle")"));
@@ -1056,39 +1101,7 @@ bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int
 		return;
 #endif
 	} // ! runHttpsClient
-	void Jam::colorMagnet()
-	{
-		cv::samples::addSamplesDataSearchPath(RESOURCES_DIR);
-		std::string lenaPath("lena.jpg");					//RGB image
-		auto lenaBGR = cv::imread(cv::samples::findFile(lenaPath));
-		const int wid = lenaBGR.cols, hi = lenaBGR.rows, pxCount = wid * hi;
-
-		cv::Mat lena_magnet(hi, wid, CV_8UC3);
-		// color combo from https://www.designwizard.com/blog/design-trends/colour-combination
-		// color order in BGR
-		std::vector<uint8_t> dstColors =
-		{
-#if 1
-			0xbd, 0x3c, 0x96,
-			0x61, 0x6f, 0xff,
-			0x9b, 0x29, 0xc5,
-			0x51, 0xae, 0xfe,
-#else
-			0xe2, 0xdd, 0xff,
-			0x94, 0xa0, 0xfa,
-			0xcc, 0xd9, 0x9e,
-			0x76, 0x8c, 0x00
-#endif
-		};
-
-		constexpr int Channel = 3;
-		{
-			//8-9ms in release
-			Util::SCOPED_TIMER(Color magnet);
-			CIMGPROC::ImageAlg::colorMagnet<Channel>(lenaBGR.data, lena_magnet.data, wid * hi, dstColors.data(), dstColors.size());
-		}
-		cv::imwrite("lena_magnet.jpg", lena_magnet);
-	}
+	
 }
 
 

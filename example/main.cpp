@@ -15,15 +15,17 @@ int main(int argc, char* argv[])
 	//jam.convert2Gray();
 	//jam.histogram();
 	//jam.NCC();
+	//jam.ZNCC();
 	//jam.binarization();
 	//jam.gaussian();
 	//jam.derivation();
-	jam.convolution();
+	//jam.convolution();
+	jam.colorMagnet();
+
 
 	//jam.execute();
 	//jam.runCL();
 	//jam.runHttpsClient();
-	//jam.colorMagnet();
 
 	return 0;
 }
