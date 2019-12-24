@@ -4,8 +4,8 @@
 * OpenCL 1.2 implemented image processing algorithms - implemented on the example
 
 <img src="/resources/lena example.jpg" width="778px" height="256px" title="px(픽셀) 크기 설정" alt="Lena example"></img><br/>  
-Left : Original image of Lena
-Middle : Median filtered
+Left : Original image of Lena  
+Middle : Median filtered  
 Right : Color magnet (Color combo from https://www.designwizard.com/blog/design-trends/colour-combination)
 
 ---
