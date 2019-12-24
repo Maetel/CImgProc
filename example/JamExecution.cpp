@@ -761,6 +761,40 @@ bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int
 		std::cout << "Program finished" << std::endl;
 	}
 
+	void Jam::extractChannel()
+	{
+		uint8_t* lenaBGR = 0, *lenaGray = 0;
+		int wid, hi;
+		if (!loadBGRandMakeGray("lena.jpg", lenaBGR, lenaGray, wid, hi))
+			return;
+		const int pxCount = wid * hi;
+
+		constexpr int MaxChannel = 3;
+		uint8_t* eachChannel[MaxChannel];
+		for (int ch = 0; ch < MaxChannel; ++ch)
+			eachChannel[ch] = new uint8_t[wid * hi];
+
+		{
+			Util::SCOPED_TIMER(extract all channel);
+			ImageAlg::extractChannelAll<MaxChannel>(lenaBGR, eachChannel, pxCount);
+		}
+
+		for (int ch = 0; ch < MaxChannel; ++ch)
+		{
+			cv::Mat img(hi, wid, CV_8U, eachChannel[ch]);
+			const std::string 
+				imgName = "channelImage",
+				curCh = std::to_string(ch),
+				suffix = ".bmp";
+			cv::imwrite(imgName + curCh + suffix, img); // "channelImage0.bmp"
+		}
+		for (int ch = 0; ch < MaxChannel; ++ch)
+			delete eachChannel[ch];
+
+		delete[] lenaBGR;
+		delete[] lenaGray;
+	}
+
 	void Jam::runCL()
 	{
 		cv::samples::addSamplesDataSearchPath(RESOURCES_DIR);
@@ -1168,7 +1202,3 @@ bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int
 	} // ! runHttpsClient
 	
 }
-
-
-
-

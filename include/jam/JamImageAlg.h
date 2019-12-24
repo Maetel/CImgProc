@@ -734,6 +734,40 @@ namespace CIMGPROC::ImageAlg
 			}
 		}
 
+		template <int MaxChannel, typename T, int StartChannel = MaxChannel - 1>
+		constexpr void extractChannelAll(T const* input, T * output[MaxChannel], const int length)
+		{
+			extractChannel<StartChannel, MaxChannel, T>(input, output[StartChannel], length);
+			extractChannelAll<MaxChannel, T, StartChannel - 1>(input, output, length);
+		}
+
+		// * the declaration below works for BGR(3) channel extraction
+		//template<> constexpr void extractChannelAll<3, uint8_t, -1>(uint8_t const* input, uint8_t * output[3], const int length) { return; }
+
+#define DECL_EXTRACT_CHANNEL_ALL_SPEC(_maxCh, _type) \
+template<> constexpr void extractChannelAll<_maxCh, _type, -1>(_type const* input, _type * output[3], const int length) { return; }
+		DECL_EXTRACT_CHANNEL_ALL_SPEC(1, uint8_t);
+		DECL_EXTRACT_CHANNEL_ALL_SPEC(2, uint8_t);
+		DECL_EXTRACT_CHANNEL_ALL_SPEC(3, uint8_t);
+		DECL_EXTRACT_CHANNEL_ALL_SPEC(4, uint8_t);
+		DECL_EXTRACT_CHANNEL_ALL_SPEC(1, short);
+		DECL_EXTRACT_CHANNEL_ALL_SPEC(2, short);
+		DECL_EXTRACT_CHANNEL_ALL_SPEC(3, short);
+		DECL_EXTRACT_CHANNEL_ALL_SPEC(4, short);
+		DECL_EXTRACT_CHANNEL_ALL_SPEC(1, int);
+		DECL_EXTRACT_CHANNEL_ALL_SPEC(2, int);
+		DECL_EXTRACT_CHANNEL_ALL_SPEC(3, int);
+		DECL_EXTRACT_CHANNEL_ALL_SPEC(4, int);
+		DECL_EXTRACT_CHANNEL_ALL_SPEC(1, unsigned int);
+		DECL_EXTRACT_CHANNEL_ALL_SPEC(2, unsigned int);
+		DECL_EXTRACT_CHANNEL_ALL_SPEC(3, unsigned int);
+		DECL_EXTRACT_CHANNEL_ALL_SPEC(4, unsigned int);
+		DECL_EXTRACT_CHANNEL_ALL_SPEC(1, float);
+		DECL_EXTRACT_CHANNEL_ALL_SPEC(2, float);
+		DECL_EXTRACT_CHANNEL_ALL_SPEC(3, float);
+		DECL_EXTRACT_CHANNEL_ALL_SPEC(4, float);
+#undef DECL_EXTRACT_CHANNEL_ALL_SPEC
+		
 		template <typename TIn, typename TOut, typename TMask>
 		void diffuse(TIn const* input1, TIn const* input2, TMask const* mask, TOut *output, int length)
 		{
