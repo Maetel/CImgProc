@@ -56,7 +56,8 @@ bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int
 
 	bool Jam::loadBGRandMakeGray(std::string const& path, uint8_t*& bgr, uint8_t*& gray, int& wid, int& hi)
 	{
-		if (!_loadImage3(path, bgr, wid, hi))
+		constexpr int Channel = 3;
+		if (!loadImage<Channel>(path, bgr, wid, hi))
 			return false;
 		
 		if (gray)
@@ -121,10 +122,11 @@ bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int
 		}
 		const int pxCount = wid * hi;
 
-		auto speakHistogram = [](int const* histogram) 
+		auto speakHistogram = [](int const* histogram, bool skipZero = true) 
 		{
 			for (int intensity = 0; intensity < 256; ++intensity)
-				std::cout << "Intensity[" << intensity << "] value[" << histogram[intensity] << "]" << std::endl;
+				if(const auto val = histogram[intensity]; val)
+					std::cout << "Intensity[" << intensity << "] value[" << val << "]" << std::endl;
 		};
 
 		//gray
@@ -137,28 +139,29 @@ bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int
 		std::cout << " [Histogram - gray]" << std::endl;
 		speakHistogram(histogram_gray);
 
+		constexpr int Channel = 3;
 		//BGR
 		int histogram_BGR[3 * 256];
+		int* histogram_BGR_extracted[Channel];
+		for (int ch; ch < Channel; ++ch)
+			histogram_BGR_extracted[ch] = new int[256];
 		{
 			Util::SCOPED_TIMER(histogram BGR);
 			ImageAlg::histogram<3>(lena, pxCount, histogram_BGR);
 		}
-		int histogram_B[256];
-		int histogram_G[256];
-		int histogram_R[256];
-		ImageAlg::extractChannel<0, 3>(histogram_BGR, histogram_B, 256);
-		ImageAlg::extractChannel<1, 3>(histogram_BGR, histogram_G, 256);
-		ImageAlg::extractChannel<2, 3>(histogram_BGR, histogram_R, 256);
+		ImageAlg::extractChannelAll<3>(histogram_BGR, histogram_BGR_extracted, 256);
 		std::cout << "========================================================================" << std::endl;
 		std::cout << " [Histogram - B]" << std::endl;
-		speakHistogram(histogram_B);
+		speakHistogram(histogram_BGR_extracted[0]);
 		std::cout << " [Histogram - G]" << std::endl;
-		speakHistogram(histogram_G);
+		speakHistogram(histogram_BGR_extracted[1]);
 		std::cout << " [Histogram - R]" << std::endl;
-		speakHistogram(histogram_R);
+		speakHistogram(histogram_BGR_extracted[2]);
 		
 		delete[] lena;
 		delete[] gray;
+		for (int ch; ch < Channel; ++ch)
+			delete[] histogram_BGR_extracted[ch];
 	}
 
 	void Jam::NCC()
@@ -765,11 +768,12 @@ bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int
 	{
 		uint8_t* lenaBGR = 0, *lenaGray = 0;
 		int wid, hi;
-		if (!loadBGRandMakeGray("lena.jpg", lenaBGR, lenaGray, wid, hi))
+		if (!loadBGRandMakeGray("jam.jpg", lenaBGR, lenaGray, wid, hi))
 			return;
 		const int pxCount = wid * hi;
 
 		constexpr int kernelSize = 11;
+#if 0
 		uint8_t* grayFiltered = new uint8_t[pxCount];
 		{
 			Util::SCOPED_TIMER(median single channel);
@@ -779,6 +783,8 @@ bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int
 			cv::Mat grayFilteredImg(hi, wid, CV_8U, grayFiltered);
 			cv::imwrite("medianGray.bmp", grayFilteredImg);
 		}
+		delete[] grayFiltered;
+#endif
 
 		uint8_t* bgrFiltered = new uint8_t[pxCount * 3];
 		{
@@ -789,11 +795,11 @@ bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int
 			cv::Mat bgrFilteredImg(hi, wid, CV_8UC3, bgrFiltered);
 			cv::imwrite("medianBGR.bmp", bgrFilteredImg);
 		}
+		delete[] bgrFiltered;
+
 
 		delete[] lenaBGR;
 		delete[] lenaGray;
-		delete[] grayFiltered;
-		delete[] bgrFiltered;
 	}
 
 	void Jam::extractChannel()
@@ -943,47 +949,15 @@ bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int
 		std::cout << "Program finished" << std::endl;
 	}
 
-	//this function's not ready for exception handling
-	std::tuple<int, int, int, int> parseAzureFaceJson (std::string const& input)
-	{
-		const auto faceRectCategory = input.find(std::string(R"("faceRectangle")"));
-		const auto faceRectStart = input.find("{", faceRectCategory);
-		const auto faceRectEnd = input.find("}", faceRectCategory);
-		const auto faceRect = input.substr(faceRectStart, faceRectEnd + 1 - faceRectStart);
-		const std::string leftStr(R"("left":)");
-		const std::string topStr(R"("top":)");
-		const std::string widthStr(R"("width":)");
-		const std::string heightStr(R"("height":)");
-
-		// TODO : replace with regex
-		//	std::regex end("^(,|})$");
-		std::string end(",");
-		const auto leftPos = faceRect.find(leftStr) + leftStr.size();
-		const auto topPos = faceRect.find(topStr) + topStr.size();
-		const auto widPos = faceRect.find(widthStr) + widthStr.size();
-		const auto hiPos = faceRect.find(heightStr) + heightStr.size();
-		const auto leftEnd = faceRect.find(end, leftPos);
-		const auto topEnd = faceRect.find(end, topPos);
-		const auto widEnd = faceRect.find(end, widPos);
-		const auto hiEnd = faceRect.find("}", hiPos);
-
-		const auto leftS = faceRect.substr(leftPos, leftEnd - leftPos);
-		const auto topS = faceRect.substr(topPos, topEnd - topPos);
-		const auto widS = faceRect.substr(widPos, widEnd - widPos);
-		const auto hiS = faceRect.substr(hiPos, hiEnd - hiPos);
-
-		return { std::stoi(leftS), std::stoi(topS), std::stoi(widS), std::stoi(hiS) };
-	}
-
-	//test MS Azure Face API
-	void Jam::runHttpsClient()
+	//detect face -> apply median filter for non-face region -> fade out from face center
+	void Jam::faceDetectionAndManipulation()
 	{
 #if defined(CIMG_LINK_HTTPLIB) // && (CIMG_LINK_PICOJSON)
 #ifndef CIMG_FACE_API_KEY
 #error(define your own Face API key path)
 #endif
 
-		//test face api
+		////////////////////////////////////////////////////////////////////////////////// face detection api
 		httplib::Client cli("cimgproc-test1.cognitiveservices.azure.com");
 		std::shared_ptr<httplib::Response> response = 0;
 
@@ -992,7 +966,7 @@ bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int
 		{
 			std::string jam_face_api_key = Util::fileToStr(CIMG_FACE_API_KEY);
 			httplib::Headers headers({{"Ocp-Apim-Subscription-Key" , jam_face_api_key }});
-			std::string body(R"({"url" : "https://github.com/Maetel/CImgProc/blob/master/resources/lena_doodled.jpg?raw=true"})");
+			std::string body(R"({"url" : "https://raw.githubusercontent.com/Maetel/CImgProc/face_api/resources/jam.jpg"})");
 				
 			response = cli.Post(
 				"/vision/v2.0/analyze?visualFeatures=Faces&details=Landmarks&language=en",
@@ -1060,19 +1034,11 @@ bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int
 
 		
 
-		struct FaceRect
+		struct Rect
 		{
 		public:
-			FaceRect() = default;
-			FaceRect(std::string const& input)
-			{
-				auto result = parseAzureFaceJson(input);
-				left = std::get<0>(result);
-				top  = std::get<1>(result);
-				wid  = std::get<2>(result);
-				hi   = std::get<3>(result);
-			}
-			~FaceRect() {}
+			Rect() = default;
+			~Rect() {}
 
 		public:
 			int left = -1;
@@ -1082,6 +1048,15 @@ bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int
 
 		public:
 			
+			Rect& setCoord(int left, int top, int wid, int hi)
+			{
+				this->left = left;
+				this->top = top;
+				this->wid = wid;
+				this->hi = hi;
+				return *this;
+			}
+
 			//returns {x,y}
 			Point leftTop() const { return Point(left, top); }
 			Point rightTop() const { return Point(left + wid, top); }
@@ -1110,130 +1085,175 @@ bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int
 			}
 		};
 
-		FaceRect face(res_body);
+		Rect face;
+
+		//this function's not ready for exception handling
+		auto parseAzureFaceJson = [](std::string const& input)->std::tuple<int, int, int, int>
+		{
+			const auto faceRectCategory = input.find(std::string(R"("faceRectangle")"));
+			const auto faceRectStart = input.find("{", faceRectCategory);
+			const auto faceRectEnd = input.find("}", faceRectCategory);
+			const auto faceRect = input.substr(faceRectStart, faceRectEnd + 1 - faceRectStart);
+			const std::string leftStr(R"("left":)");
+			const std::string topStr(R"("top":)");
+			const std::string widthStr(R"("width":)");
+			const std::string heightStr(R"("height":)");
+
+			// TODO : replace with regex
+			//	std::regex end("^(,|})$");
+			std::string end(",");
+			const auto leftPos = faceRect.find(leftStr) + leftStr.size();
+			const auto topPos = faceRect.find(topStr) + topStr.size();
+			const auto widPos = faceRect.find(widthStr) + widthStr.size();
+			const auto hiPos = faceRect.find(heightStr) + heightStr.size();
+			const auto leftEnd = faceRect.find(end, leftPos);
+			const auto topEnd = faceRect.find(end, topPos);
+			const auto widEnd = faceRect.find(end, widPos);
+			const auto hiEnd = faceRect.find("}", hiPos);
+
+			const auto leftS = faceRect.substr(leftPos, leftEnd - leftPos);
+			const auto topS = faceRect.substr(topPos, topEnd - topPos);
+			const auto widS = faceRect.substr(widPos, widEnd - widPos);
+			const auto hiS = faceRect.substr(hiPos, hiEnd - hiPos);
+
+			return { std::stoi(leftS), std::stoi(topS), std::stoi(widS), std::stoi(hiS) };
+		};
+
+		auto result = parseAzureFaceJson(res_body);
+		face.setCoord(
+			std::get<0>(result),
+			std::get<1>(result),
+			std::get<2>(result),
+			std::get<3>(result)
+		);
+
 		std::cout << face.toString() << std::endl;
 		
-		cv::samples::addSamplesDataSearchPath(RESOURCES_DIR);
-		std::string lenaPath("lena.jpg");					//RGB image
-		std::string lenaPath_d("lena_doodled.jpg");					//RGB image
-		auto lenaBGR = cv::imread(cv::samples::findFile(lenaPath));
-		auto lenaBGR_d = cv::imread(cv::samples::findFile(lenaPath_d));
-		const int wid = lenaBGR.cols, hi = lenaBGR.rows;
-		cv::Mat lenaGray(wid, hi, CV_8U);
-		cv::Mat lenaGray_d(wid, hi, CV_8U);
-		CIMGPROC::ImageAlg::convert2Gray<CIMGPROC::ImageAlg::BGR2GRAY>(lenaBGR.data, lenaGray.data, wid* hi);
-		CIMGPROC::ImageAlg::convert2Gray<CIMGPROC::ImageAlg::BGR2GRAY>(lenaBGR_d.data, lenaGray_d.data, wid* hi);
+		////////////////////////////////////////////////////////////////////////////////// end of using face detection API
+
+		const std::string path = "jam.jpg";
+		uint8_t* bgrImage = 0, *gray = 0;
+		int wid, hi;
+		if (!loadBGRandMakeGray(path, bgrImage, gray, wid, hi))
+		{
+			std::cout << "No image or image path not correct" << std::endl;
+			return;
+		}
+		const int pxCount = wid * hi;
+
+		cv::Mat bgr2CV(wid, hi, CV_8UC3, bgrImage);
+		cv::Mat faceDetected(wid, hi, CV_8UC3);
 		
-		cv::Mat lenaGrayFaceDetected(wid, hi, CV_8U);
-		cv::Mat lena_mask(wid, hi, CV_32F);
-		lena_mask.setTo(0);
-
 		const auto faceCenterPoint = face.centerPoint();
-		const auto faceRectDistance = face.farthest();
-		for (int y = 0; y < hi; ++y)
+		const auto faceRectDistance = face.farthest() * 2.;
+
+		Rect imageRect;
+		imageRect.setCoord(0, 0, wid, hi);
+		const auto totalDistance = face.farthest() + imageRect.farthest();
+
+		auto fillMask = [](int wid, int hi, Point const& centerPoint, double dist)->cv::Mat
 		{
-			for (int x = 0; x < wid; ++x)
+			cv::Mat retval(wid, hi, CV_32F);
+			retval.setTo(0);
+
+			for (int y = 0; y < hi; ++y)
 			{
-				const Point curPoint(x, y);
+				for (int x = 0; x < wid; ++x)
+				{
+					const Point curPoint(x, y);
 #if 1
-				const auto dist = curPoint.distanceFrom(faceCenterPoint);
-				if (dist > faceRectDistance)
-					continue;
+					const auto curDist = curPoint.distanceFrom(centerPoint);
+					if (curDist > dist)
+						continue;
 
-				lena_mask.at<float>(y, x) = float(1 - dist / faceRectDistance);
+					retval.at<float>(y, x) = float(1 - curDist / dist);
 #else
-				if (face.containsPoint(curPoint))
-					lena_mask.at<float>(y, x) = 1;
+					if (face.containsPoint(curPoint))
+						jam_mask.at<float>(y, x) = 1;
 #endif
+				}
 			}
-		}
 
-		for (int idx = 0; idx < wid * hi; ++idx)
-		{
-			lenaGrayFaceDetected.data[idx] = ((float const*)lena_mask.data)[idx] * (lenaGray.data[idx]);
-		}
+			return retval;
+		};
 
-		cv::imwrite("lenaGrayFaceDetected.jpg", lenaGrayFaceDetected);
+		const auto faceMask = fillMask(wid, hi, faceCenterPoint, faceRectDistance);
+		const auto finalMask = fillMask(wid, hi, faceCenterPoint, totalDistance);
+
+		for(int y = 0; y < hi; ++y)
+			for(int x = 0; x < wid; ++x)
+				faceDetected.at<cv::Vec3b>(y,x) = faceMask.at<float>(y,x) * bgr2CV.at<cv::Vec3b>(y, x);
+
+		cv::imwrite("faceDetected.jpg", faceDetected);
 
 		//median for diffuse
-		cv::Mat medianed(wid, hi, CV_8U);
-		if(0)
+		uint8_t* medianed = new uint8_t[pxCount * 3];
+		//try loading premaid
+		int wid_med, hi_med;
+		bool makeMedian = true;
+		if (loadImage<3>("medianedImg.jpg", medianed, wid_med, hi_med))
 		{
+			if (wid_med == wid && hi_med == hi)
+			{
+				std::cout << "premaid \"medianedImg.jpg\" loaded" << std::endl;
+				makeMedian = false;
+			}
+		}
+		
+		if(makeMedian)
+		{
+			//if medianed image does not exist
+			constexpr int kernelSize = 15;
 			{
 				//median for diffuse
 				Util::SCOPED_TIMER(Median for diffuse);
-				CIMGPROC::ImageAlg::medianFilter(lenaGray.data, medianed.data, wid, hi, 15);
+				CIMGPROC::ImageAlg::medianFilter_t<3>(bgrImage, medianed, wid, hi, kernelSize);
 			}
-			cv::imwrite("lena_medianed.jpg", medianed);
-		}
-		else
-		{
-			//load premaid
-			medianed = cv::imread("lena_medianed.jpg", cv::IMREAD_GRAYSCALE);
+
+			if (1)
+			{
+				//save for later use
+				cv::Mat medianedImg(hi, wid, CV_8UC3, medianed);
+				cv::imwrite("medianedImg.jpg", medianedImg);
+			}
 		}
 
 		//diffuse
-		{
-			cv::Mat diffused(wid, hi, CV_8U);
-			{
-				//diffuse with ratio
-				Util::SCOPED_TIMER(diffuse with ratio);
-				CIMGPROC::ImageAlg::diffuse(lenaGray.data, lenaGrayFaceDetected.data, 0.5, diffused.data, wid* hi);
-			}
-			cv::imwrite("lenaDiffused_ratio.jpg", diffused);
+		uint8_t* diffusedFace = new uint8_t[pxCount * 3];
+		uint8_t* diffusedFinal = new uint8_t[pxCount * 3];
+		uint8_t* zeros = new uint8_t[pxCount * 3];
+		for (int idx = 0; idx < pxCount; ++idx) zeros[idx] = 0;
 
-			{
-				//diffuse with mask
-				Util::SCOPED_TIMER(diffuse with mask);
-				CIMGPROC::ImageAlg::diffuse(medianed.data, lenaGray.data, (float const*)lena_mask.data, diffused.data, wid * hi);
-			}
-			cv::imwrite("lenaDiffused_mask.jpg", diffused);
+		//diffuse face
+		CIMGPROC::ImageAlg::diffuse<3>(medianed, bgrImage, (float const*)faceMask.data, diffusedFace, wid * hi);
+
+		//diffuse total
+		CIMGPROC::ImageAlg::diffuse<3>(zeros, diffusedFace, (float const*)finalMask.data, diffusedFinal, wid * hi);
+
+		if (1)
+		{
+			//check output
+			cv::Mat diffusedFaceImg(hi, wid, CV_8UC3, diffusedFace);
+			cv::imwrite("diffusedFace.jpg", diffusedFaceImg);
+
+			cv::Mat diffusedFinalImg(hi, wid, CV_8UC3, diffusedFinal);
+			cv::imwrite("finalOutput.jpg", diffusedFinalImg);
 		}
 
-		//prepare cl buffers
-		auto context = CLInstance.context();
-		auto queue = cl::CommandQueue(context);
 
-		//diffuse with CL
 		{
-			cl_int err;
-			cl::Buffer grayBuf(context, CL_MEM_READ_ONLY, wid* hi);
-			cl::Buffer medianBuf(context, CL_MEM_READ_ONLY, wid* hi);
-			cl::Buffer maskBuf(context, CL_MEM_READ_ONLY, wid* hi * sizeof(float));
-			cl::Buffer diffuseBuf(context, CL_MEM_WRITE_ONLY, wid* hi);
-
-			queue.enqueueWriteBuffer(grayBuf, false, 0, wid* hi, lenaGray.data);
-			queue.enqueueWriteBuffer(medianBuf, false, 0, wid* hi, medianed.data);
-			queue.enqueueWriteBuffer(maskBuf, true, 0, wid* hi * sizeof(float), lena_mask.data);
-			queue.flush();
-			queue.finish();
-
-			CIMGPROC::CL::CLDiffuse diffuser;
-			diffuser.build();
-			cv::Mat diffused(wid, hi, CV_8U);
-			for(int idx = 0; idx < 10; ++idx)
-			{
-				//diffuse with mask cl
-				Util::SCOPED_TIMER(diffuse with mask cl);
-				diffuser.diffuse(queue, grayBuf, medianBuf, diffuseBuf, maskBuf, wid* hi);
-			}
-			CIMGPROC::CL::download(queue, diffuseBuf, diffused.data, wid* hi);
-			cv::imwrite("lenaDiffused_mask_cl.jpg", diffused);
-
-			for (int idx = 0; idx < 10; ++idx)
-			{
-				//diffuse with mask cl
-				Util::SCOPED_TIMER(diffuse with ratio cl);
-				diffuser.diffuse(queue, grayBuf, medianBuf, diffuseBuf, 0.1f, wid * hi);
-			}
-			CIMGPROC::CL::download(queue, diffuseBuf, diffused.data, wid* hi);
-			cv::imwrite("lenaDiffused_ratio_cl.jpg", diffused);
+			//clean up
+			delete[] bgrImage;
+			delete[] gray;
+			delete[] medianed;
+			delete[] diffusedFace;
+			delete[] diffusedFinal;
+			delete[] zeros;
 		}
-
 #else
 		std::cerr << "Library not linked. Returning..." << std::endl;
 		return;
 #endif
-	} // ! runHttpsClient
+	} // ! faceDetectionAndManipulation
 	
 }

@@ -22,13 +22,13 @@ int main(int argc, char* argv[])
 	//jam.convolution();
 	//jam.colorMagnet();
 	//jam.differenceOfGaussian();
-	jam.extractChannel();
+	//jam.extractChannel();
 	//jam.median();
 
 
 	//jam.execute();
 	//jam.runCL();
-	//jam.runHttpsClient();
+	jam.faceDetectionAndManipulation();
 
 	return 0;
 }

@@ -56,7 +56,7 @@ bool _loadImage##_ch(std::string const& path, uint8_t* &data, int& wid, int& hi)
 		void execute();
 		void extractChannel();
 		void runCL();
-		void runHttpsClient();
+		void faceDetectionAndManipulation();
 	};
 }
 
