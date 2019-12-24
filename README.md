@@ -30,7 +30,7 @@ Eigen       | Yes                       | 3.3.7 / No        | Matrix computation
 OpenCL      | Yes                       | 1.2(NVidia) / Yes | Parallel computation  |
 HttpLib     | Yes                       | No                | Face API HTTP Request |
 
-*<em>OpenCV version, path to lib files, and path to DLLs must be set manually on `./scripts/link_cv.cmake`</em>
+*<em>OpenCV version, path to lib files, and path to DLLs must be set manually on `./scripts/link_cv.cmake`</em>  
 *<em>Your private `MS Azure Face API Key` is required if you want to run some examples</em>
 
 ###### __Functions__
@@ -42,27 +42,35 @@ mean/variance/deviation
 
 * <em>Naive image data manipulation</em>
 1. Convert color image to gray
-1. Binarization - 
-(i) Image histogram 
-(ii) Binarization - Threshold/Otsu
-1. Template matching - 
-(i) Normalized Cross Correlation (NCC) 
-(ii) Zero Normalized Cross Correlation (ZNCC)
-1. Image convolution -
-(i) Convolution with manual kernels 
-(ii) Gaussian blur (Gaussian kernel generation) 
-(iii) Derivative (naive, Sobel, Scharr) 
-(iv) Difference of Gaussian (DoG) 
-1. Diffuse - (i) mask (ii) ratio
+1. Extract Channel  
+(i) Single channel  
+(ii) Multi channel  
+1. Binarization  
+(i) Image histogram   
+(ii) Binarization - Threshold/Otsu  
+1. Template matching  
+(i) Normalized Cross Correlation (NCC)  
+(ii) Zero Normalized Cross Correlation (ZNCC)  
+1. Image convolution  
+(i) Convolution with manual kernels  
+(ii) Gaussian blur (Gaussian kernel generation)  
+(iii) Derivative (naive, Sobel, Scharr)  
+(iv) Difference of Gaussian (DoG)  
+1. Diffuse  
+(i) mask  
+(ii) ratio  
 1. Color magnet
+1. Median filter
+(i) Single channel  
+(ii) Multi channel  
 
 * <em>OpenCL Implementation</em>
 1. Array difference(distance)
 1. Convert color image to gray
-1. Convolution - 
-(i) Convolution with manual kernels 
-(ii) Gaussian blur (Gaussian kernel generation) 
-(iii) Derivative (naive, Sobel, Scharr) 
+1. Convolution  
+(i) Convolution with manual kernels  
+(ii) Gaussian blur (Gaussian kernel generation)  
+(iii) Derivative (naive, Sobel, Scharr)  
 1. Diffuse - (i) mask (ii) ratio
 
 ---
