@@ -49,6 +49,8 @@ bool _loadImage##_ch(std::string const& path, uint8_t* &data, int& wid, int& hi)
 		void derivation();
 		void convolution();
 		void colorMagnet();
+		void differenceOfGaussian();
+
 
 		void execute();
 		void runCL();

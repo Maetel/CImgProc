@@ -18,6 +18,7 @@ namespace CIMGPROC::ImageAlg
 		//	* morphology (erosion & dilation)
 		//	* image pyramid
 		//	* median filter to Running median
+		//	* boundary handling
 
 		using uint8_t = unsigned char;
 		using uchar = uint8_t;
@@ -333,7 +334,7 @@ namespace CIMGPROC::ImageAlg
 				for (int kern_x = 0; kern_x < kern_wid; ++kern_x)
 					norm_decider += kernel[kern_x + kern_y * kern_wid];
 
-			if (0.0001 >= std::abs(norm_decider))
+			if (FLT_EPSILON >= std::abs(norm_decider))
 				normalize = false;
 
 			for (int y = 0; y < hi; ++y)
@@ -451,11 +452,12 @@ namespace CIMGPROC::ImageAlg
 			ImageAlg::convolution(input, output, wid, hi, scharrDyKernel, 3, 3);
 		} //!scharrDy
 
-		template <typename T1, typename T2 = T1>
-		inline void difference(T1 const* input1, T1 const* input2, int length, T2 * output, double* sum_of_distance = nullptr)
+		template <typename ...Params>
+		inline void difference(Params&&... params)
 		{
-			distance(input1, input2, length, output, sum_of_distance);
+			distance(std::forward<Params>(params)...);
 		} //!difference
+
 		template <typename T1, typename T2 = T1>
 		inline void distance(T1 const* input1, T1 const* input2, int length, T2 * output, double* sum_of_distance = nullptr)
 		{
@@ -552,12 +554,13 @@ namespace CIMGPROC::ImageAlg
 				return;
 
 			const int length = wid * hi;
-			T2 *gauss_l, *gauss_r;
-			gauss_l = new T2[length];
-			gauss_r = new T2[length];
+			T2 *gauss_l = new T2[length];
+			T2 *gauss_r = new T2[length];
 			ImageAlg::gaussianConvolution(input, gauss_l, wid, hi, gauss_size_l, gauss_sigma_l);
 			ImageAlg::gaussianConvolution(input, gauss_r, wid, hi, gauss_size_r, gauss_sigma_r);
 			ImageAlg::difference(gauss_l, gauss_r, length, output);
+			delete[] gauss_l;
+			delete[] gauss_r;
 		} //!differenceOfGaussian
 
 		template <typename T1 = uint8_t, typename T2 = T1, bool Binarize = true>

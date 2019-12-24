@@ -20,7 +20,8 @@ int main(int argc, char* argv[])
 	//jam.gaussian();
 	//jam.derivation();
 	//jam.convolution();
-	jam.colorMagnet();
+	//jam.colorMagnet();
+	jam.differenceOfGaussian();
 
 
 	//jam.execute();

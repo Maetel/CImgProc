@@ -351,22 +351,21 @@ bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int
 		const int pxCount = wid * hi;
 
 		uint8_t* lena_convo= new uint8_t[pxCount];
-		constexpr int convoKernel[] =
+		constexpr int kern_wid = 7, kern_hi = 7;
+		constexpr int convoKernel[kern_wid * kern_hi] =
 		{
-			1, 1, 1, 1, 1, 1, 1, 1, 1,
-			1, 0, 0, 0, 0, 0, 0, 0, 1,
-			1, 0, 0, 0, 0, 0, 0, 0, 1,
-			1, 0, 0, 0, -3, 0, 0, 0, 1,
-			1, 0, 0, -3, 0, -3, 0, 0, 1,
-			1, 0, 0, 0, -3, 0, 0, 0, 1,
-			1, 0, 0, 0, 0, 0, 0, 0, 1,
-			1, 0, 0, 0, 0, 0, 0, 0, 1,
-			1, 1, 1, 1, 1, 1, 1, 1, 1
+			1, 1, 1, 1, 1, 1, 1,
+			1, 0, 0, 0, 0, 0, 1,
+			1, 0, -3, -7, -3, 0, 1,
+			1, 0, -7, 30, -7, 0, 1,
+			1, 0, -3, -7, -3, 0, 1,
+			1, 0, 0, 0, 0, 0, 1,
+			1, 1, 1, 1, 1, 1, 1
 		};
 
 		{
 			Util::SCOPED_TIMER(convo);
-			ImageAlg::convolution(lenaGray, lena_convo, wid, hi, convoKernel, 9, 9);
+			ImageAlg::convolution(lenaGray, lena_convo, wid, hi, convoKernel, kern_wid, kern_hi);
 		}
 		cv::Mat convoImg(hi, wid, CV_8U, lena_convo);
 		cv::imwrite("lena_convo.bmp", convoImg);
@@ -419,6 +418,72 @@ bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int
 		delete[] lenaBGR;
 		delete[] lenaGray;
 		delete[] lena_magnet;
+	}
+
+	void Jam::differenceOfGaussian()
+	{
+		uint8_t* lenaBGR = 0, *lenaGray = 0;
+		int wid, hi;
+		if (!loadBGRandMakeGray("lena.jpg", lenaBGR, lenaGray, wid, hi))
+			return;
+		const int pxCount = wid * hi;
+
+		//difference of gaussian
+		uint8_t* DoG = new uint8_t[wid * hi];
+		uint8_t* DoG_bin = new uint8_t[wid * hi];
+		{
+			Util::SCOPED_TIMER(difference of gaussian);
+			ImageAlg::differenceOfGaussian(lenaGray, DoG, wid, hi);
+		}
+
+		{
+			//binarize and check result
+			int binThres;
+			ImageAlg::binarize(DoG, DoG_bin, pxCount, &binThres);
+			cv::Mat DoGBinImg(hi, wid, CV_8U, DoG_bin);
+			cv::imwrite("lena_DoG_binarized.jpg", DoGBinImg);
+			std::cout << "Otsu binarization threshold : " << binThres << std::endl;
+		}
+		auto* toBeSynthed = DoG_bin;
+
+		uint8_t* DoG_dilated = 0;
+		if (0)
+		{
+			//dilation
+			DoG_dilated = new uint8_t[wid * hi];
+			const int dilation_kern_size = 5; // operate with 5x5 kernel
+			{
+				Util::SCOPED_TIMER(Dilation of DoG);
+				ImageAlg::dilation(DoG_bin, DoG_dilated, wid, hi, dilation_kern_size);
+			}
+			toBeSynthed = DoG_dilated;
+
+			{
+				cv::Mat DoG_dilated_img(hi, wid, CV_8U, DoG_dilated);
+				cv::imwrite("lena_DoG_dilation.jpg", DoG_dilated_img);
+			}
+		}
+		
+		//synth BGR image
+		uint8_t* synth = new uint8_t[wid * hi * 3];
+		memcpy(synth, lenaBGR, pxCount * 3 *sizeof(uint8_t));
+		{
+			constexpr double alpha = 0.3;
+			Util::SCOPED_TIMER(Synth image);
+			for(int idx = 0; idx < pxCount; ++idx)
+				if (!toBeSynthed[idx])
+					for(int ch = 0; ch < 3; ++ch)
+						synth[idx*3 + ch] = uint8_t(synth[idx*3 + ch] * 0.3);
+		}
+		cv::Mat synthImg(hi, wid, CV_8UC3, synth);
+		cv::imwrite("lena_synthed.jpg", synthImg);
+
+		delete[] lenaBGR;
+		delete[] lenaGray;
+		delete[] DoG;
+		delete[] DoG_bin;
+		if(nullptr != DoG_dilated) delete[] DoG_dilated;
+		delete[] synth;
 	}
 
 	void Jam::execute()
