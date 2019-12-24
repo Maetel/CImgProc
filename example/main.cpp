@@ -21,7 +21,9 @@ int main(int argc, char* argv[])
 	//jam.derivation();
 	//jam.convolution();
 	//jam.colorMagnet();
-	jam.differenceOfGaussian();
+	//jam.differenceOfGaussian();
+	jam.extractChannel();
+	//jam.median();
 
 
 	//jam.execute();

@@ -761,6 +761,41 @@ bool Jam::_loadImage##_ch(std::string const& path, uint8_t*& data, int& wid, int
 		std::cout << "Program finished" << std::endl;
 	}
 
+	void Jam::median()
+	{
+		uint8_t* lenaBGR = 0, *lenaGray = 0;
+		int wid, hi;
+		if (!loadBGRandMakeGray("lena.jpg", lenaBGR, lenaGray, wid, hi))
+			return;
+		const int pxCount = wid * hi;
+
+		constexpr int kernelSize = 11;
+		uint8_t* grayFiltered = new uint8_t[pxCount];
+		{
+			Util::SCOPED_TIMER(median single channel);
+			ImageAlg::medianFilter(lenaGray, grayFiltered, wid, hi, kernelSize);
+		}
+		{
+			cv::Mat grayFilteredImg(hi, wid, CV_8U, grayFiltered);
+			cv::imwrite("medianGray.bmp", grayFilteredImg);
+		}
+
+		uint8_t* bgrFiltered = new uint8_t[pxCount * 3];
+		{
+			Util::SCOPED_TIMER(median multi channel);
+			ImageAlg::medianFilter_t<3>(lenaBGR, bgrFiltered, wid, hi, kernelSize);
+		}
+		{
+			cv::Mat bgrFilteredImg(hi, wid, CV_8UC3, bgrFiltered);
+			cv::imwrite("medianBGR.bmp", bgrFilteredImg);
+		}
+
+		delete[] lenaBGR;
+		delete[] lenaGray;
+		delete[] grayFiltered;
+		delete[] bgrFiltered;
+	}
+
 	void Jam::extractChannel()
 	{
 		uint8_t* lenaBGR = 0, *lenaGray = 0;

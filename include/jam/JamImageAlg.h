@@ -768,6 +768,40 @@ template<> constexpr void extractChannelAll<_maxCh, _type, -1>(_type const* inpu
 		DECL_EXTRACT_CHANNEL_ALL_SPEC(4, float);
 #undef DECL_EXTRACT_CHANNEL_ALL_SPEC
 		
+		//lazy and expensive way using existing code
+		template <int Channel = 1, typename T1 = uint8_t, typename T2 = uint8_t, bool SkipNaN = true>
+		void medianFilter_t(T1 const* input, T2 * output, int wid, int hi, int kernelSize = 3)
+		{
+			if (nullptr == input || nullptr == output || 0 >= wid || 0 >= hi || 3 > kernelSize)
+				return;
+
+			const int length = wid * hi;
+
+			T1* eachChannel[Channel];
+			T2* eachMedianed[Channel];
+			for (int ch = 0; ch < Channel; ++ch)
+			{
+				eachChannel[ch] = new T1[length];
+				eachMedianed[ch] = new T2[length];
+			}
+				
+			extractChannelAll<Channel, T1>(input, eachChannel, length);
+
+			for (int ch = 0; ch < Channel; ++ch)
+				medianFilter(eachChannel[ch], eachMedianed[ch], wid, hi, kernelSize);
+			
+			for (int idx = 0; idx < length; ++idx)
+				for (int ch = 0; ch < Channel; ++ch)
+					output[(idx * Channel) + ch] = eachMedianed[ch][idx];
+
+			for (int ch = 0; ch < Channel; ++ch)
+			{
+				delete eachChannel[ch];
+				delete eachMedianed[ch];
+			}
+				
+		}
+
 		template <typename TIn, typename TOut, typename TMask>
 		void diffuse(TIn const* input1, TIn const* input2, TMask const* mask, TOut *output, int length)
 		{

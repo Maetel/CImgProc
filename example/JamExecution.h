@@ -50,9 +50,11 @@ bool _loadImage##_ch(std::string const& path, uint8_t* &data, int& wid, int& hi)
 		void convolution();
 		void colorMagnet();
 		void differenceOfGaussian();
+		void median();
 
 
 		void execute();
+		void extractChannel();
 		void runCL();
 		void runHttpsClient();
 	};
