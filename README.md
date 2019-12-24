@@ -1,9 +1,12 @@
 ## CImgProc
 * C++ Image processing algorithms
 * Header-only template functions (naive way)
-* OpenCL 1.2 implemented image processing algorithms - requires install build
+* OpenCL 1.2 implemented image processing algorithms - implemented on the example
 
-<img src="/resources/lena example.jpg" width="400px" height="200px" title="px(픽셀) 크기 설정" alt="RubberDuck"></img><br/>
+<img src="/resources/lena example.jpg" width="778px" height="256px" title="px(픽셀) 크기 설정" alt="Lena example"></img><br/>  
+Left : Original image of Lena
+Middle : Median filtered
+Right : Color magnet (Color combo from https://www.designwizard.com/blog/design-trends/colour-combination)
 
 ---
 
@@ -60,7 +63,7 @@ mean/variance/deviation
 (i) mask  
 (ii) ratio  
 1. Color magnet
-1. Median filter
+1. Median filter  
 (i) Single channel  
 (ii) Multi channel  
 
@@ -71,7 +74,9 @@ mean/variance/deviation
 (i) Convolution with manual kernels  
 (ii) Gaussian blur (Gaussian kernel generation)  
 (iii) Derivative (naive, Sobel, Scharr)  
-1. Diffuse - (i) mask (ii) ratio
+1. Diffuse  
+(i) mask  
+(ii) ratio  
 
 ---
 
