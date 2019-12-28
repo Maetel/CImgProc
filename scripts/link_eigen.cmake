@@ -15,7 +15,7 @@ set(EIGEN_SRC "${3RD_PARTY}/eigen/${EIGEN_VERSION}")
 
 #set macro
 macro(link_eigen)
-    include_directories(${current_project} "${EIGEN_SRC}")
+    target_include_directories(${current_project} PUBLIC "${EIGEN_SRC}")
 
     add_definitions(/D "CIMG_LINK_EIGEN = 1")
     message("${current_project} : Eigen Linked")

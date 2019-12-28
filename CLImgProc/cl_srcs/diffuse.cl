@@ -1,3 +1,4 @@
+R"(
 //////////////////////////////////////////////////////
 // CImgProc, header-only image processing project   //
 //  * Author : Wonjun Hwang                         //
@@ -54,3 +55,4 @@ __kernel void diffuse_mask
     const TMask maskVal = mask[curPx];
     output[curPx] = CONVERTER(TOut)(convert_float(val1 * maskVal) + convert_float(val2 * (1.f - maskVal)));
 }
+)"

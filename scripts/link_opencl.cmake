@@ -18,10 +18,11 @@ set(OpenCL_SRC_DIRPATH "${SRC_DIR}/cl_srcs/")
 
 #set macro
 macro(link_opencl)    
-    include_directories(${current_project} ${OpenCL_INCLUDE})
-    target_link_libraries(${current_project} ${OpenCL_STATIC_x64})
+    target_include_directories(${current_project} PUBLIC ${OpenCL_INCLUDE})
+    target_link_libraries(${current_project} PUBLIC ${OpenCL_STATIC_x64})
 
-    add_definitions(/D "CL_SRC_DIRPATH=\\\"${OpenCL_SRC_DIRPATH}\\\"")
+    #add_definitions(/D "CL_SRC_DIRPATH=\\\"${OpenCL_SRC_DIRPATH}\\\"")
+    add_definitions(/D "CL_SRC_DIRPATH=\\\"/cl_srcs/\\\"")
     add_definitions(/D "CIMG_LINK_OPENCL=1")
     message("${current_project} : OpenCL Linked")
 endmacro()

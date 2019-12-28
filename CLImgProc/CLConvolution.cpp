@@ -184,7 +184,10 @@ namespace CIMGPROC::CL
 			for (int x = 3; x < 20; x+=2)
 			{
 				const std::string mapDst = toProgramMap(x, y);
-				m_programs[mapDst] = buildProgram("convolution.cl", kernSizeDefinition(x, y));
+				const std::string s(
+#include "cl_srcs/convolution.cl"
+				);
+				m_programs[mapDst] = buildProgramWithSrc(s, kernSizeDefinition(x, y));
 			}
 		}
 	}

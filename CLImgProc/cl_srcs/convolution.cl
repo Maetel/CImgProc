@@ -1,3 +1,4 @@
+R"(
 //////////////////////////////////////////////////////
 // CImgProc, header-only image processing project   //
 //  * Author : Wonjun Hwang                         //
@@ -55,3 +56,4 @@ __kernel void convolution
         valSum /= normSum;
     output[curPx] = CONVERTER(TOut)(valSum);
 }
+)"

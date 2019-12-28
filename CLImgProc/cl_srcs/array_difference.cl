@@ -1,3 +1,4 @@
+R"(
 //////////////////////////////////////////////////////
 // CImgProc, header-only image processing project   //
 //  * Author : Wonjun Hwang                         //
@@ -29,4 +30,4 @@ __kernel void array_difference
 
     output[curPx] = _ABS(input1[curPx] - input2[curPx]);
 }
-
+)"

@@ -4,31 +4,38 @@
 //  * E-mail : iamjam4944@gmail.com					//
 //////////////////////////////////////////////////////
 
-#include "JamExecution.h"
-#include "BrettExecution.h"
+#include "ImageAlgExample.h"
+#include "CLAlgExample.h"
 
 int main(int argc, char* argv[])
 {
-	CIMGPROC::Jam jam;
+	if (0)
+	{
+		CIMGPROC::ImageAlgExample example;
+		example.loadImageTester();
+		example.convert2Gray();
+		example.histogram();
+		example.NCC();
+		example.ZNCC();
+		example.binarization();
+		example.gaussian();
+		example.derivation();
+		example.convolution();
+		example.colorMagnet();
+		example.differenceOfGaussian();
+		example.extractChannel();
+		example.median();
+		example.faceDetectionAndManipulation();
+	}
+
+	if (1)
+	{
+		CIMGPROC::CLImageAlgExample example;
+		example.runCL();
+	}
 	
-	//jam.loadImageTester();
-	//jam.convert2Gray();
-	//jam.histogram();
-	//jam.NCC();
-	//jam.ZNCC();
-	//jam.binarization();
-	//jam.gaussian();
-	//jam.derivation();
-	//jam.convolution();
-	//jam.colorMagnet();
-	//jam.differenceOfGaussian();
-	//jam.extractChannel();
-	//jam.median();
 
-
-	//jam.execute();
-	//jam.runCL();
-	jam.faceDetectionAndManipulation();
+	//example.runCL();
 
 	return 0;
 }

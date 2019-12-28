@@ -17,7 +17,10 @@ namespace CIMGPROC::CL
 
 	void CLDiffuse::rebuildProgram()
 	{
-		program = this->buildProgram("diffuse.cl");
+		const std::string s(
+#include "cl_srcs/diffuse.cl"
+		);
+		program = this->buildProgramWithSrc(s, "");
 	}
 	bool CLDiffuse::diffuse(cl::CommandQueue& queue, cl::Buffer const& input1, cl::Buffer const& input2, cl::Buffer& output, float ratio_1to2, int length)
 	{

@@ -1,3 +1,4 @@
+R"(
 //////////////////////////////////////////////////////
 // CImgProc, header-only image processing project   //
 //  * Author : Wonjun Hwang                         //
@@ -84,3 +85,4 @@ __kernel void bgra2gray
         data.z * 0.2126f
     );
 }
+)"

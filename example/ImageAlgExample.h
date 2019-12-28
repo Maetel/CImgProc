@@ -4,15 +4,15 @@
 //  * E-mail : iamjam4944@gmail.com					//
 //////////////////////////////////////////////////////
 
-#ifndef CIMGPROC_JAM_EXECUTION_H
-#define CIMGPROC_JAM_EXECUTION_H
+#ifndef CIMGPROC_IMAGE_ALG_EXAMPLE_H
+#define CIMGPROC_IMAGE_ALG_EXAMPLE_H
 
 #include <string>
-#include <utility>
+//#include <utility>
 
 namespace CIMGPROC
 {
-	class Jam
+	class ImageAlgExample
 	{
 		using uint8_t = unsigned char;
 	public:
@@ -51,14 +51,10 @@ bool _loadImage##_ch(std::string const& path, uint8_t* &data, int& wid, int& hi)
 		void colorMagnet();
 		void differenceOfGaussian();
 		void median();
-
-
-		void execute();
 		void extractChannel();
-		void runCL();
 		void faceDetectionAndManipulation();
 	};
 }
 
 
-#endif //!CIMGPROC_JAM_EXECUTION_H
+#endif //!CIMGPROC_IMAGE_ALG_EXAMPLE_H

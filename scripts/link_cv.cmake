@@ -24,8 +24,8 @@ set(OPENCV_LIB_DEBUG "${OPENCV_LIB_DIR}/Debug/opencv_world${OPENCV_VERSION_CLEAR
 
 #set macro
 macro(link_opencv)
-    include_directories(${current_project} ${OPENCV_INCLUDE})
-    target_link_libraries(${current_project}
+    target_include_directories(${current_project} PUBLIC ${OPENCV_INCLUDE})
+    target_link_libraries(${current_project} PUBLIC
         debug ${OPENCV_LIB_DEBUG}
         optimized ${OPENCV_LIB_OPTIMIZED}
     )

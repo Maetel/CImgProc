@@ -10,7 +10,12 @@
 namespace CIMGPROC::CL
 {
 	const static std::string _include() { return R"(#include "includes.cl")"; }
-	const static std::string _includes() { return Util::fileToStr(CL_SRC_DIRPATH "includes.cl"); }
+	const static std::string _includes() //{ return Util::fileToStr(CL_SRC_DIRPATH "includes.cl"); }
+	{
+		return std::string(
+#include "cl_srcs/includes.cl"
+		);
+	}
 	const static std::string _externOptions() { return R"(#external_options)"; }
 
 	void CLAlgorithm::build()
@@ -18,30 +23,31 @@ namespace CIMGPROC::CL
 		this->rebuildProgram();
 	}
 
-	cl::Program CLAlgorithm::buildProgram(std::string const& fileName, std::string const& options)
+	cl::Program CLAlgorithm::buildProgramWithSrc(std::string const& src, std::string const& options)
 	{
-		auto src = Util::fileToStr(std::string(CL_SRC_DIRPATH) + fileName);
-		Util::replace(src, _include(), _includes());
-		Util::replace(src, _externOptions(), options);
+		auto _src = src;
+		Util::replace(_src, _include(), _includes());
+		Util::replace(_src, _externOptions(), options);
 		constexpr bool build = true;
 		cl_int err;
 
-		//if(std::string("convolution.cl") == fileName)
-		//{
-		//	std::cout << src << std::endl;
-		//}
-
-		cl::Program prgm(context(), src, build, &err);
+		cl::Program prgm(context(), _src, build, &err);
 
 		if (CL_SUCCESS != err)
 		{
 			std::string err_log;
 			prgm.getBuildInfo(device(), CL_PROGRAM_BUILD_LOG, &err_log);
-			std::cout << "[" __FUNCTION__ << ", " << __LINE__ << "]\n" << src<< "\n=====================================================================\n" << err_log << std::endl;
+			std::cout << "[" __FUNCTION__ << ", " << __LINE__ << "]\n" << src << "\n=====================================================================\n" << err_log << std::endl;
 			return nullptr;
 		}
 
 		return prgm;
+	}
+
+	cl::Program CLAlgorithm::buildProgram(std::string const& fileName, std::string const& options)
+	{
+		auto src = Util::fileToStr(std::string(CL_SRC_DIRPATH) + fileName);
+		return buildProgramWithSrc(src, options);
 	}
 	cl::NDRange CLAlgorithm::localSize() const
 	{

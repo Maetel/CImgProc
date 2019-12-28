@@ -5,6 +5,8 @@
 //////////////////////////////////////////////////////
 
 #include "CLConvert2Gray.h"
+
+
 namespace CIMGPROC::CL
 {
 	CLConvert2Gray::CLConvert2Gray()
@@ -17,7 +19,13 @@ namespace CIMGPROC::CL
 
 	void CLConvert2Gray::rebuildProgram()
 	{
-		program = this->buildProgram("convert2gray.cl", "");
+		//program = this->buildProgram("convert2gray.cl", "");
+		const std::string s(
+#include "cl_srcs/convert2gray.cl"
+		)
+			;
+		
+		program = this->buildProgramWithSrc(s, "");
 	}
 
 	bool CLConvert2Gray::convert2gray(cl::CommandQueue& queue, cl::Buffer const& input, cl::Buffer& output, int length, Convert2Gray cvtType)

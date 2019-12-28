@@ -27,6 +27,7 @@ namespace CIMGPROC::CL
 		CLAlgorithm(int size1, int size2) : m_localSize(size1, size2) {};
 		CLAlgorithm(int size1, int size2, int size3) : m_localSize(size1, size2, size3) {};
 
+		cl::Program buildProgramWithSrc(std::string const& src, std::string const& options);
 		cl::Program buildProgram(std::string const& filePath, std::string const& options = "");
 		cl::NDRange localSize() const;
 

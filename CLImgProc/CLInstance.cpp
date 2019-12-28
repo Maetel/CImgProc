@@ -13,6 +13,7 @@ namespace CIMGPROC::CL
 		Internal() {}
 		~Internal() {}
 
+
 		void init()
 		{
 			m_platform = cl::Platform::getDefault();

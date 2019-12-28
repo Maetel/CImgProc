@@ -37,7 +37,7 @@ namespace CIMGPROC::Util
 	{
 		using Timer = std::chrono::high_resolution_clock;
 	public:
-		__ScopedTimer(std::string text) : m_text(text) { m_timer = Timer::now(); }
+		__ScopedTimer(std::string const& text) : m_text(text) { m_timer = Timer::now(); }
 		~__ScopedTimer()
 		{
 			auto finished = Timer::now();

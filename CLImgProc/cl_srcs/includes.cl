@@ -1,3 +1,4 @@
+R"(
 //////////////////////////////////////////////////////
 // CImgProc, header-only image processing project   //
 //  * Author : Wonjun Hwang                         //
@@ -91,3 +92,4 @@ barrier(CLK_LOCAL_MEM_FENCE)
 
 
 #endif //!CIMGPROC_INCLUDES_CL
+)"

@@ -1,0 +1,24 @@
+######################################################
+## CImgProc, header-only image processing project   ##
+##  * Author : Wonjun Hwang                         ##
+##  * E-mail : iamjam4944@gmail.com                 ##
+######################################################
+
+######################################################
+## CLImgProc
+######################################################
+
+#predefined on the main CMakeLists.txt
+#set(CLIMGPROC_PATH "${SRC_DIR}/CLImgProc_prebuilt")
+#set(CLIMGPROC_INCLUDE "${CLIMGPROC_PATH}/include")
+#set(CLIMGPROC_LIB_DIR "${CLIMGPROC_PATH}/lib/")
+
+set(CLIMGPROC_LIB_DEBUG "${CLIMGPROC_LIB}/Debug/CLImgProc.lib")
+set(CLIMGPROC_LIB_OPTIMIZED "${CLIMGPROC_LIB}/Release/CLImgProcd.lib")
+
+macro(link_CLImgProc)
+    target_link_libraries (${current_project} PUBLIC CLImgProc)
+    
+    add_definitions(-D CLIMGPROC_LINKED=1)
+    message("${current_project} : CLImgProc Linked")
+endmacro()

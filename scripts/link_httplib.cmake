@@ -15,7 +15,7 @@ set(HTTPLIB_INCLUDE "${HTTPLIB_PATH}/include")
 
 #set macro
 macro(link_httplib)
-    include_directories(${current_project} ${HTTPLIB_INCLUDE})
+    target_include_directories(${current_project} PUBLIC ${HTTPLIB_INCLUDE})
     add_definitions(-D CIMG_LINK_HTTPLIB=1)
     if(EXISTS "${JAM_FACE_API_KEY}")
         add_definitions(/D "CIMG_FACE_API_KEY=\\\"${JAM_FACE_API_KEY}\\\"")
